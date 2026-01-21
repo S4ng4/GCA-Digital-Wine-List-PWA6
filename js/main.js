@@ -5287,7 +5287,7 @@ function initInteractiveMap() {
                         inertiaDeceleration: 3000, // Deceleration rate for inertia (matching desktop)
                         inertiaMaxSpeed: 1500, // Max speed for inertia (matching desktop)
                         worldCopyJump: false // Prevent map from jumping when panning
-                    }).setView([42.0, 12.5], 6.0); // Zoom aumentato per mappa più grande
+                    }).setView([42.0, 12.5], 6.5); // Zoom aumentato per mappa più grande
                     // Add tile layer with dark theme
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '© OpenStreetMap contributors',
@@ -5417,9 +5417,9 @@ function initInteractiveMap() {
                             const bounds = mobileGeoJsonLayer.getBounds();
                             // Aumenta il padding per assicurarsi che tutte le regioni siano visibili
                             mobileMapInstance.fitBounds(bounds, { padding: [80, 80] });
-                            // Slight adjustment for better angle - zoom leggermente ridotto per mostrare tutte le regioni
+                            // Slight adjustment for better angle - zoom aumentato per mappa più grande
                             setTimeout(() => {
-                                mobileMapInstance.setView([42.0, 12.5], 5.8);
+                                mobileMapInstance.setView([42.0, 12.5], 6.5);
                             }, 100);
                             
                             // Invalidate size again after GeoJSON is added

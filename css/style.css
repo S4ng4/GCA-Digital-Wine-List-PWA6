@@ -4219,8 +4219,8 @@ body:not(.home-page) .luxury-container {
         min-height: 350px;
         height: 100%;
         border-radius: 20px;
-        margin-left: 51px; /* Aggiunto margin-left di 51px */
-        margin-top: 83px; /* Aggiunto margin-top di 83px */
+        margin-left: 0;
+        margin-top: 0;
     }
     
     /* Desktop wines grid nascosto */
@@ -8430,8 +8430,8 @@ body:has(.mobile-side-menu.open) .mobile-wines-cards-grid .mobile-wine-card-grid
         min-height: 715px; /* Aumentato del 30% da 550px */
         background: #0E0E0E !important;
         overflow: visible !important;
-        margin-left: 51px; /* Modificato margin-left a 51px */
-        margin-top: 83px; /* Modificato margin-top a 83px */
+        margin-left: 0; /* Rimosso margin-left per mappa più grande */
+        margin-top: 0; /* Rimosso margin-top per mappa più grande */
     }
 
     /* Day mode styles for #mobileMap */
@@ -10068,8 +10068,8 @@ body:has(.mobile-side-menu.open) .mobile-wines-cards-grid .mobile-wine-card-grid
         min-height: 455px; /* Aumentato del 30% da 350px */
         height: 100%;
         border-radius: 16px;
-        margin-left: 51px; /* Modificato margin-left a 51px */
-        margin-top: 83px; /* Modificato margin-top a 83px */
+        margin-left: 0;
+        margin-top: 0;
     }
     
     /* Label regioni ben visibili anche su schermi piccoli */
