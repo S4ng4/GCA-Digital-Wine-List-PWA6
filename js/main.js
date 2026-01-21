@@ -3672,6 +3672,96 @@ function getWineTypeColors(wineType) {
             return { border: '#D4AF37', fill: '#D4AF37' };
         }
 
+// Add region labels for desktop map
+function addDesktopRegionLabels(geojson) {
+    if (!mapInstance || !geojson) return;
+    
+    // Store labels layer
+    if (!window.desktopRegionLabelsLayer) {
+        window.desktopRegionLabelsLayer = L.layerGroup().addTo(mapInstance);
+    }
+    
+    // Clear existing labels
+    window.desktopRegionLabelsLayer.clearLayers();
+    
+    // Calculate label width based on text length
+    const getLabelWidth = (text) => {
+        return Math.max(80, text.length * 8 + 20);
+    };
+    
+    // Position adjustments for desktop (same as mobile)
+    const regionAdjustments = {
+        'piemonte': { lat: -0.4, lng: -0.25 },
+        'valle d\'aosta': { lat: 0.3, lng: -0.8 },
+        'lombardia': { lat: 0.45, lng: 0.15 },
+        'trentino-alto adige': { lat: 0.55, lng: -0.5 },
+        'veneto': { lat: 0.35, lng: 0.6 },
+        'friuli-venezia giulia': { lat: 0.55, lng: 1.0 },
+        'liguria': { lat: -0.3, lng: -1.3 },
+        'emilia-romagna': { lat: 0.05, lng: 0.1 },
+        'toscana': { lat: -0.2, lng: -0.55 },
+        'umbria': { lat: -0.15, lng: 0.05 },
+        'marche': { lat: 0.15, lng: 0.55 },
+        'lazio': { lat: -0.35, lng: -0.35 },
+        'abruzzo': { lat: 0.2, lng: 0.5 },
+        'molise': { lat: 0.1, lng: 0.75 },
+        'campania': { lat: -0.45, lng: -0.25 },
+        'puglia': { lat: 0.15, lng: 0.85 },
+        'basilicata': { lat: 0.1, lng: 0.5 },
+        'calabria': { lat: -0.35, lng: 0.2 },
+        'sicilia': { lat: -0.25, lng: 0 },
+        'sardegna': { lat: 0, lng: 0 }
+    };
+    
+    // Process each region
+    geojson.features.forEach(feature => {
+        const regionName = feature.properties.reg_name || feature.properties.NAME || feature.properties.name || 'Unknown';
+        const normalizedName = regionName.trim().toLowerCase();
+        
+        // Create temporary layer to get bounds
+        const layer = L.geoJSON(feature);
+        const bounds = layer.getBounds();
+        const center = bounds.getCenter();
+        
+        // Get manual adjustment if exists
+        let adjustment = { lat: 0, lng: 0 };
+        for (const [key, value] of Object.entries(regionAdjustments)) {
+            if (normalizedName.includes(key)) {
+                adjustment = value;
+                break;
+            }
+        }
+        
+        // Calculate final position
+        const finalLat = center.lat + adjustment.lat;
+        const finalLng = center.lng + adjustment.lng;
+        
+        // Calculate icon size
+        const labelWidth = getLabelWidth(regionName);
+        const iconSize = [labelWidth, 30];
+        
+        // Create custom icon for label (using desktop class)
+        const labelIcon = L.divIcon({
+            className: 'desktop-region-label',
+            html: `<div class="desktop-region-label-text">${regionName}</div>`,
+            iconSize: iconSize,
+            iconAnchor: [iconSize[0] / 2, iconSize[1] / 2]
+        });
+        
+        // Create marker for label
+        const labelMarker = L.marker([finalLat, finalLng], {
+            icon: labelIcon,
+            interactive: false,
+            zIndexOffset: 1000
+        });
+        
+        // Add to labels layer
+        window.desktopRegionLabelsLayer.addLayer(labelMarker);
+    });
+    
+    console.log('✅ Desktop region labels added');
+}
+
 // Update map colors with animation and highlight regions with wines
 function updateMapColors(wineType) {
     console.log('🎨 updateMapColors called with wineType:', wineType);
@@ -4228,7 +4318,7 @@ function initInteractiveMap() {
         // Initialize map with uniform touch/mouse interactions
         mapInstance = L.map('map', {
             zoomControl: true,
-            minZoom: 8,
+            minZoom: 5,
             maxZoom: 10,
             maxBounds: [[35.5, 5.0], [48.0, 20.0]],
             maxBoundsViscosity: 0.5, // Reduced for smoother panning
@@ -4243,7 +4333,7 @@ function initInteractiveMap() {
             inertiaDeceleration: 3000, // Deceleration rate for inertia
             inertiaMaxSpeed: 1500, // Max speed for inertia
             worldCopyJump: false // Prevent map from jumping when panning
-        }).setView([41.9, 12.6], 10);
+        }).setView([42.0, 12.5], 6); // Zoom ridotto per mostrare tutta l'Italia con label
         
         // Add tile layer with HTTPS tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -4502,6 +4592,10 @@ function initInteractiveMap() {
                     onEachFeature: onEachFeature
                 }).addTo(mapInstance);
                 console.log('✅ geoJsonLayer created and added to map');
+                
+                // Add region labels for desktop
+                addDesktopRegionLabels(geojson);
+                
                 mapInstance.fitBounds(geoJsonLayer.getBounds(), { padding: [20, 20] });
                 // Store original zoom and center for restoration
                 originalMapZoom = mapInstance.getZoom();

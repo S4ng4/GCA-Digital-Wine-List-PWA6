@@ -4231,6 +4231,40 @@ body:not(.home-page) .luxury-container {
 
 /* Tutti i dispositivi sotto iPad Pro - layout unificato (già gestito da @media (max-width: 1023px)) */
 
+/* Desktop Region Labels - Gold elegant style */
+.desktop-region-label {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    z-index: 500 !important;
+    pointer-events: none !important;
+}
+
+.desktop-region-label-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #C9A227;
+    font-family: 'Cormorant Garamond', 'Times New Roman', Georgia, serif;
+    font-style: italic;
+    letter-spacing: 0.03em;
+    text-shadow: 
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        -1px -1px 2px rgba(0, 0, 0, 0.5),
+        0 0 8px rgba(0, 0, 0, 0.6);
+    white-space: nowrap;
+    background: transparent !important;
+    padding: 0;
+    border-radius: 0;
+}
+
+:root[data-theme="day"] .desktop-region-label-text {
+    color: #8B6914;
+    text-shadow: 
+        1px 1px 2px rgba(255, 255, 255, 0.9),
+        -1px -1px 2px rgba(255, 255, 255, 0.6),
+        0 0 6px rgba(255, 255, 255, 0.4);
+}
+
 /* Leaflet Zoom Controls - Position inside visible map area */
 .leaflet-control-zoom {
     position: absolute !important;
