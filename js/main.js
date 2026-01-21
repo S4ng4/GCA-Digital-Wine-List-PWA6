@@ -5287,7 +5287,7 @@ function initInteractiveMap() {
                         inertiaDeceleration: 3000, // Deceleration rate for inertia (matching desktop)
                         inertiaMaxSpeed: 1500, // Max speed for inertia (matching desktop)
                         worldCopyJump: false // Prevent map from jumping when panning
-                    }).setView([42.0, 12.5], 5.5); // Zoom ridotto per mostrare tutta l'Italia con label visibili
+                    }).setView([42.0, 12.5], 6.0); // Zoom aumentato per mappa più grande
                     // Add tile layer with dark theme
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '© OpenStreetMap contributors',
@@ -5419,7 +5419,7 @@ function initInteractiveMap() {
                             mobileMapInstance.fitBounds(bounds, { padding: [80, 80] });
                             // Slight adjustment for better angle - zoom leggermente ridotto per mostrare tutte le regioni
                             setTimeout(() => {
-                                mobileMapInstance.setView([42.0, 12.5], 5.3);
+                                mobileMapInstance.setView([42.0, 12.5], 5.8);
                             }, 100);
                             
                             // Invalidate size again after GeoJSON is added
