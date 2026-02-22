@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gran Caffè L'Aquila Philadelphia - Wine Collection</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#D4AF37">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GCA Wines">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="GCA Wines">
+    <meta name="msapplication-TileColor" content="#0E0E0E">
+    <meta name="msapplication-TileImage" content="./image/icon-144x144.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="./image/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="./image/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./image/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="./image/icon-152x152.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./image/icon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./image/icon-72x72.png">
+    
+    <!-- Bootstrap 5.3 CSS (HTTPS CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- Font Awesome (HTTPS CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <!-- Google Fonts (HTTPS) - 2 fonts max for readability/perf -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Preload hero image (above-the-fold) -->
+    <link rel="preload" as="image" href="./image/secondFloor.webp" type="image/webp">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        /* Landing Page Specific Styles - MOBILE FIRST */
+        :root {
+            --gold: #D4AF37;
+            --gold-light: #F4CF67;
+            --ivory: #F5F5F0;
+            --font-heading: 'Cinzel', serif;
+            --font-body: 'Cormorant', serif;
+            --transition-slow: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-medium: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.landing-page {
+            background-color: #0E0E0E;
+            color: var(--ivory);
+            overflow-x: hidden;
+            font-family: var(--font-body);
+        }
+
+        /* Header - Logo rimosso, header minimale */
+        .landing-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            padding: 1rem;
+            display: none; /* Header nascosto - logo spostato nel pulsante Our Story */
+            align-items: center;
+            justify-content: center;
+            animation: slideDown 0.6s ease-out;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Header sempre visibile su tablet - rimosso .hidden */
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .landing-logo-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            background: rgba(10, 10, 10, 0.3);
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+        }
+
+        .landing-logo-image {
+            max-width: 200px;
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .landing-logo-image:hover {
+            transform: scale(1.05);
+        }
+
+        /* Hero Section - Mobile First */
+        .landing-hero {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, 
+                rgba(10, 10, 10, 0.2) 0%,
+                rgba(10, 10, 10, 0.4) 30%,
+                rgba(10, 10, 10, 0.8) 70%,
+                rgba(10, 10, 10, 0.95) 100%);
+            z-index: 2;
+        }
+
+        .hero-background-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            filter: brightness(0.7) contrast(1.1);
+        }
+
+        /* Contenuto Hero */
+        .landing-hero-content {
+            position: relative;
+            z-index: 3;
+            width: 90%;
+            max-width: 1200px;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            text-align: center;
+            padding-top: 40px; /* Ridotto spazio header (logo rimosso) */
+        }
+
+        /* Titolo principale con animazione */
+        .landing-hero-text {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--gold);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0;
+            line-height: 1.2;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 1s 0.5s forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Sottotitolo con animazione a scaglioni */
+        .landing-subtitle {
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            color: rgba(245, 245, 240, 0.8);
+            max-width: 600px;
+            line-height: 1.6;
+            margin: 0;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s 0.8s forwards;
+        }
+
+        /* Domanda principale */
+        .landing-question {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--ivory);
+            text-align: center;
+            margin: 1.5rem 0;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s 1s forwards;
+            letter-spacing: 1px;
+        }
+
+        /* Pulsanti principali - Card Style */
+        .landing-buttons-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            width: 100%;
+            max-width: 500px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s 1.2s forwards;
+        }
+
+        .landing-button {
+            position: relative;
+            background: rgba(26, 26, 26, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 15px;
+            color: var(--ivory);
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: none;
+            padding: 1.5rem 1.75rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            overflow: hidden;
+            text-align: left;
+            min-height: 80px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .landing-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .landing-button:hover::before,
+        .landing-button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .landing-button:hover,
+        .landing-button:active {
+            border-color: var(--gold);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.35);
+            background: rgba(26, 26, 26, 0.95);
+        }
+
+        .landing-button-icon {
+            font-size: 2rem;
+            color: var(--gold);
+            transition: transform 0.3s ease, color 0.3s ease;
+            flex-shrink: 0;
+            width: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .landing-button:hover .landing-button-icon,
+        .landing-button:active .landing-button-icon {
+            transform: scale(1.1);
+            color: var(--gold-light);
+        }
+
+        /* Logo nel pulsante Our Story */
+        .landing-button-icon.logo-icon {
+            width: auto;
+            height: 50px;
+            max-width: 120px;
+        }
+
+        .landing-button-icon.logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: brightness(0) saturate(100%) invert(75%) sepia(50%) saturate(500%) hue-rotate(5deg) brightness(1.1);
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+
+        .landing-button:hover .landing-button-icon.logo-icon img,
+        .landing-button:active .landing-button-icon.logo-icon img {
+            transform: scale(1.1);
+            filter: brightness(0) saturate(100%) invert(80%) sepia(50%) saturate(500%) hue-rotate(5deg) brightness(1.2);
+        }
+
+
+        .landing-button-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .landing-button-title {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--gold);
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .landing-button-description {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: rgba(245, 245, 240, 0.8);
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        /* Bottone speciale Explore - più grande */
+        .landing-button.explore {
+            background: linear-gradient(135deg, 
+                rgba(212, 175, 55, 0.12), 
+                rgba(212, 175, 55, 0.06));
+            border-width: 2px;
+            border-color: rgba(212, 175, 55, 0.4);
+            min-height: 90px;
+        }
+
+        .landing-button.explore:hover {
+            background: linear-gradient(135deg, 
+                rgba(212, 175, 55, 0.18), 
+                rgba(212, 175, 55, 0.1));
+            border-color: var(--gold);
+        }
+
+        /* Bottone Storia - più piccolo */
+        .landing-button.story {
+            min-height: 70px;
+            padding: 1.25rem 1.75rem;
+        }
+
+        /* Footer */
+        .landing-footer {
+            background: rgba(10, 10, 10, 0.95);
+            padding: 1.5rem 1rem;
+            text-align: center;
+            border-top: 1px solid rgba(212, 175, 55, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+
+        .landing-footer-text {
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            color: rgba(245, 245, 240, 0.7);
+            letter-spacing: 1px;
+            margin: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* Animazioni scroll */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .animate-on-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* TABLET - Media Queries */
+        @media (min-width: 768px) {
+            .landing-header {
+                padding: 1rem 2rem;
+            }
+
+            .landing-logo-image {
+                max-width: 300px;
+            }
+
+            .landing-hero-content {
+                padding: 3rem 2rem;
+                gap: 2.5rem;
+                padding-top: 60px; /* Ridotto (header nascosto) */
+            }
+
+            .landing-hero-text {
+                font-size: 3rem;
+                letter-spacing: 3px;
+            }
+
+            .landing-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .landing-question {
+                font-size: 1.8rem;
+                margin: 2rem 0;
+            }
+
+            .landing-buttons-section {
+                max-width: 650px;
+                gap: 1.5rem;
+            }
+
+            .landing-button {
+                padding: 1.75rem 2rem;
+                min-height: 90px;
+            }
+
+            .landing-button-icon {
+                font-size: 2.5rem;
+                width: 60px;
+            }
+
+            .landing-button-icon.logo-icon {
+                height: 60px;
+                max-width: 150px;
+            }
+
+            .landing-button-title {
+                font-size: 1.4rem;
+            }
+
+            .landing-button-description {
+                font-size: 1rem;
+            }
+
+            .landing-button.explore {
+                min-height: 100px;
+            }
+
+            .landing-button.story {
+                min-height: 80px;
+            }
+
+            .landing-footer {
+                padding: 2rem;
+            }
+
+            .landing-footer-text {
+                font-size: 1rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .landing-hero-text {
+                font-size: 4rem;
+            }
+
+            .landing-question {
+                font-size: 2rem;
+            }
+
+            .landing-buttons-section {
+                max-width: 700px;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .landing-hero-text {
+                text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+            }
+        }
+
+        /* Prefers reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Touch devices: subtle tap feedback without hover lift */
+        @media (hover: none) and (pointer: coarse) {
+            .landing-button:hover,
+            .landing-button:active {
+                transform: scale(0.98);
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+            }
+        }
+    </style>
+</head>
+<body class="landing-page">
+    <!-- Header - Logo rimosso, spostato nel pulsante Our Story -->
+    <header class="landing-header" id="mainHeader">
+        <!-- Logo rimosso dall'header -->
+    </header>
+
+    <!-- Hero Section -->
+    <section class="landing-hero">
+        <!-- Background con animazione -->
+        <div class="hero-background">
+            <picture>
+                <source srcset="./image/secondFloor.webp" type="image/webp">
+                <img src="./image/secondFloor.png" alt="Gran Caffè L'Aquila Restaurant Interior" class="hero-background-image" decoding="async" fetchpriority="high">
+            </picture>
+        </div>
+        
+        <!-- Contenuto -->
+        <div class="landing-hero-content">
+            <h2 class="landing-hero-text">THE JOURNEY STARTS HERE</h2>
+            
+            <p class="landing-subtitle">
+                Discover the authentic taste of Italy through our curated wine selection and traditional Italian hospitality
+            </p>
+            
+            <!-- Domanda principale -->
+            <h3 class="landing-question">How would you like to explore our wines?</h3>
+            
+            <!-- Bottoni principali - Riordinati -->
+            <div class="landing-buttons-section">
+                <!-- 1. Explore by Region -->
+                <a href="./wine-map.html" class="landing-button explore">
+                    <div class="landing-button-icon">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <div class="landing-button-content">
+                        <div class="landing-button-title">Explore by Region</div>
+                        <div class="landing-button-description">Discover wines through our interactive map of Italy</div>
+                    </div>
+                </a>
+                
+                <!-- 2. Wine by the Glass -->
+                <a href="./WineByTheGlass.html" class="landing-button">
+                    <div class="landing-button-icon">
+                        <i class="fas fa-wine-glass-alt"></i>
+                    </div>
+                    <div class="landing-button-content">
+                        <div class="landing-button-title">Wine by the Glass</div>
+                        <div class="landing-button-description">See today's selection, ready to enjoy</div>
+                    </div>
+                </a>
+                
+                <!-- 3. Our Story -->
+                <a href="./OurStory.html" class="landing-button story">
+                    <div class="landing-button-icon logo-icon">
+                        <img src="./image/logoFull.svg" alt="Gran Caffè L'Aquila Logo" loading="lazy" decoding="async">
+                    </div>
+                    <div class="landing-button-content">
+                        <div class="landing-button-title">Our Story</div>
+                        <div class="landing-button-description">From L'Aquila to Philadelphia</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <p class="landing-footer-text">
+            DISCOVER THE FULL WINE LIST SELECTING THE REGION AND THE STYLE<br>
+            <span style="font-size: 0.8rem; color: rgba(245, 245, 240, 0.5); margin-top: 0.5rem; display: block;">
+                Experience the renaissance of authentic Italian culture in Philadelphia
+            </span>
+        </p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="./js/main.js"></script>
+    <script>
+        // Landing page: keep JS minimal to avoid reflows on tablet hardware.
+    </script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        // Register Service Worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('./sw.js', {
+                        scope: './'
+                    });
+                    
+                    console.log('[PWA] Service Worker registered successfully:', registration.scope);
+                    
+                    // Handle updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        console.log('[PWA] New Service Worker installing...');
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // New content available, show update notification
+                                console.log('[PWA] New content available, refresh to update');
+                                showUpdateNotification();
+                            }
+                        });
+                    });
+                    
+                } catch (error) {
+                    console.error('[PWA] Service Worker registration failed:', error);
+                }
+            });
+            
+            // Handle controller change (when new SW takes over)
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('[PWA] Controller changed, page will reload for updates');
+            });
+        }
+        
+        // Show update notification (optional UI enhancement)
+        function showUpdateNotification() {
+            // You can customize this to show a toast/banner
+            const updateBanner = document.createElement('div');
+            updateBanner.id = 'pwa-update-banner';
+            updateBanner.innerHTML = `
+                <style>
+                    #pwa-update-banner {
+                        position: fixed;
+                        bottom: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+                        border: 1px solid #D4AF37;
+                        border-radius: 12px;
+                        padding: 16px 24px;
+                        z-index: 10000;
+                        display: flex;
+                        align-items: center;
+                        gap: 16px;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                        font-family: 'Cormorant', serif;
+                        animation: slideUp 0.3s ease-out;
+                    }
+                    #pwa-update-banner span {
+                        color: #F5F5F0;
+                        font-size: 0.95rem;
+                    }
+                    #pwa-update-banner button {
+                        background: #D4AF37;
+                        color: #0a0a0a;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-family: 'Cinzel', serif;
+                        font-weight: 600;
+                        font-size: 0.85rem;
+                        transition: all 0.2s ease;
+                    }
+                    #pwa-update-banner button:hover {
+                        background: #F4CF67;
+                        transform: scale(1.05);
+                    }
+                    @keyframes slideUp {
+                        from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+                        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+                    }
+                </style>
+                <span>New version available!</span>
+                <button onclick="location.reload()">Update</button>
+            `;
+            document.body.appendChild(updateBanner);
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (updateBanner.parentNode) {
+                    updateBanner.style.animation = 'slideUp 0.3s ease-out reverse';
+                    setTimeout(() => updateBanner.remove(), 300);
+                }
+            }, 10000);
+        }
+        
+        // Detect if running as installed PWA
+        if (window.matchMedia('(display-mode: standalone)').matches || 
+            window.navigator.standalone === true) {
+            console.log('[PWA] Running in standalone mode (installed)');
+            document.body.classList.add('pwa-standalone');
+        }
+    </script>
+</body>
+</html>
