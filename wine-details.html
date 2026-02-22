@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Wine Details - Gran Caffè L'Aquila</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant:wght@300;400;500&display=swap" rel="stylesheet">
@@ -19,6 +19,9 @@
             --cream: #F8F8F0;
             --transition-slow: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             --transition-medium: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Subtle "halo" used for bottle depth (matches H1 tone) */
+            --wine-title-glow-1: rgba(244, 207, 103, 0.264);
+            --wine-title-glow-2: rgba(244, 207, 103, 0.144);
         }
 
         * {
@@ -42,7 +45,20 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            background: linear-gradient(135deg, var(--charcoal) 0%, var(--black) 100%);
+            position: relative;
+            background: #000;
+            background-image: none !important;
+            background-size: auto;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .luxury-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: none;
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* Top Bar */
@@ -148,6 +164,7 @@
             overflow-x: hidden;
             padding: 0;
             width: 100%;
+            background: #000;
         }
 
         .wine-details-container::-webkit-scrollbar {
@@ -171,15 +188,39 @@
             margin: 0 auto;
             padding: 2rem 1.5rem;
             gap: 0;
+            background: #000;
+            color: var(--ivory);
         }
 
-        /* Wine Details Content - Two Column Layout */
+        /* Wine Details Content: left = bottle image, right = wineMeta + tasting notes */
         @media (min-width: 768px) {
             .wine-details-content {
                 display: grid;
-                grid-template-columns: 0.4fr 0.6fr;
-                gap: 2.5rem;
+                grid-template-columns: minmax(200px, 0.35fr) 1fr;
+                grid-template-rows: auto;
+                gap: 2rem 2.5rem;
                 align-items: start;
+            }
+            .wine-image-section {
+                grid-column: 1;
+                grid-row: 1 / -1;
+                position: sticky;
+                top: 5rem;
+            }
+            .wine-info-section {
+                grid-column: 2;
+                grid-row: 1;
+            }
+            .tasting-notes-row {
+                grid-column: 2;
+                grid-row: 2;
+                width: 100%;
+                margin-top: 0;
+            }
+            .wine-info-section .wine-meta {
+                max-width: 100%;
+                margin-left: 0;
+                margin-right: 0;
             }
         }
 
@@ -194,6 +235,7 @@
 
         .wine-image {
             width: 100%;
+            height: 320px;
             min-height: 280px;
             display: flex;
             align-items: center;
@@ -203,8 +245,39 @@
             border-radius: 0;
             box-shadow: none;
             position: relative;
-            overflow: visible;
+            overflow: hidden;
             margin: 1.5rem 0;
+        }
+        @media (min-width: 768px) {
+            .wine-image {
+                height: 450px;
+            }
+        }
+
+        /* Soft golden halo behind bottle (static) */
+        #wineImageContainer {
+            isolation: isolate; /* keep ::before behind children without z-index side effects */
+        }
+        #wineImageContainer::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 52%;
+            transform: translate(-50%, -50%);
+            width: min(380px, 92%);
+            aspect-ratio: 1 / 1;
+            border-radius: 999px;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(
+                circle at center,
+                rgba(244, 207, 103, 0.42) 0%,
+                rgba(212, 175, 55, 0.20) 34%,
+                rgba(212, 175, 55, 0.10) 52%,
+                rgba(212, 175, 55, 0.00) 70%
+            );
+            filter: blur(10px);
+            opacity: 0.95;
         }
 
         .wine-bottle {
@@ -213,15 +286,29 @@
         }
 
         #wineBottleImage {
+            position: relative;
+            z-index: 1;
             max-width: 70%;
-            max-height: 100%;
+            max-height: 300px;
             width: auto;
             height: auto;
             object-fit: contain;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+            filter:
+                drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55))
+                drop-shadow(0 0 19px var(--wine-title-glow-1))
+                drop-shadow(0 0 48px var(--wine-title-glow-2));
+            will-change: filter;
+            transition: filter 240ms ease;
+        }
+        @media (min-width: 768px) {
+            #wineBottleImage {
+                max-height: 420px;
+            }
         }
         
         #wineBottleIcon {
+            position: relative;
+            z-index: 1;
             display: block;
         }
         
@@ -327,6 +414,102 @@
             text-decoration-color: var(--gold);
         }
 
+        /* Tasting Notes Popup */
+        .tasting-notes-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .tasting-notes-popup-overlay.active {
+            display: flex;
+        }
+
+        .tasting-notes-popup-overlay[aria-hidden="true"] {
+            display: none;
+        }
+
+        .tasting-notes-popup-overlay[aria-hidden="false"] {
+            display: flex;
+        }
+
+        .tasting-notes-popup-content {
+            background: linear-gradient(135deg, var(--charcoal) 0%, var(--black) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 0;
+            width: 90%;
+            max-width: 480px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .tasting-notes-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            background: linear-gradient(135deg, var(--charcoal) 0%, var(--black) 100%);
+        }
+
+        .tasting-notes-popup-title {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .tasting-notes-popup-close {
+            background: none;
+            border: none;
+            color: var(--gold);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+            transition: all 0.2s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .tasting-notes-popup-close:hover {
+            background: rgba(212, 175, 55, 0.15);
+        }
+
+        .tasting-notes-popup-body {
+            padding: 1.5rem;
+        }
+
+        .tasting-notes-popup-body .tasting-notes-panel-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border: none;
+        }
+
+        .tasting-notes-popup-body .tasting-category {
+            margin-bottom: 0;
+        }
+
         .section-title {
             font-family: 'Cinzel', serif;
             font-size: 1.2rem;
@@ -403,6 +586,11 @@
             height: fit-content;
         }
 
+        .wine-name-block {
+            width: 100%;
+            text-align: center;
+        }
+
         .wine-name {
             font-family: 'Cinzel', serif;
             font-size: 1.8rem;
@@ -419,6 +607,20 @@
             .wine-name {
                 font-size: 2.2rem;
             }
+        }
+
+        .wine-quick-info {
+            margin-top: 0.75rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            color: var(--ivory);
+            line-height: 1.4;
+        }
+
+        .wine-quick-info .quick-info-tagline {
+            display: block;
+            font-style: italic;
+            opacity: 0.9;
         }
 
         .wine-description {
@@ -438,8 +640,8 @@
             gap: 0;
             font-size: 1rem;
             padding: 1.5rem;
-            background: transparent;
-            border: 1px solid rgba(212, 175, 55, 0.3);
+            background-color: rgba(0, 0, 0, 0.46);
+            border: none;
             border-radius: 12px;
             margin: 1.5rem auto;
             width: 100%;
@@ -516,7 +718,7 @@
 
         /* Tasting Category (for WineApp compatibility) */
         .tasting-category {
-            background: linear-gradient(135deg, rgba(26, 26, 26, 0.6) 0%, rgba(10, 10, 10, 0.85) 100%);
+            background: transparent;
             border: 1px solid rgba(212, 175, 55, 0.2);
             padding: 1.5rem;
             border-radius: 12px;
@@ -532,7 +734,7 @@
         }
 
         .tasting-category:hover {
-            background: rgba(212, 175, 55, 0.15);
+            background: transparent;
             border-color: var(--gold);
         }
 
@@ -544,19 +746,92 @@
             letter-spacing: 1px;
         }
 
-        /* Tasting Notes Container between wine name and image */
-        #tastingNotesContainer {
-            margin: 1.25rem 0 1.5rem 0;
+        /* Tasting Notes: button + popup */
+
+        .tasting-notes-header {
             width: 100%;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            font-family: 'Cinzel', serif;
+            font-size: max(1.125rem, 16px); /* prevent iOS Safari zoom on tap */
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: var(--gold);
+            background: rgba(26, 26, 26, 0.6);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s, color 0.2s;
+        }
+        .tasting-notes-header:hover {
+            background: rgba(212, 175, 55, 0.08);
+            color: var(--gold-light);
+        }
+        .tasting-notes-header:focus {
+            outline: 2px solid var(--gold);
+            outline-offset: 2px;
+        }
+        .tasting-notes-header-icon {
+            display: inline-block;
+            width: 0.5rem;
+            height: 0.5rem;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: rotate(45deg);
+            margin-left: 0.5rem;
+            transition: transform 0.25s ease;
         }
 
+        .tasting-notes-panel {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .tasting-notes-panel[hidden] {
+            max-height: 0 !important;
+            display: block;
+            visibility: hidden;
+        }
+        .tasting-notes-panel:not([hidden]) {
+            max-height: 1200px;
+            visibility: visible;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .tasting-notes-panel,
+            .tasting-notes-header-icon { transition: none; }
+        }
+        .tasting-notes-panel-inner {
+            padding: 1rem 1.25rem 1.25rem;
+            border-top: 1px solid rgba(212, 175, 55, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        @media (min-width: 768px) {
+            .tasting-notes-panel-inner {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 1rem 1.25rem;
+            }
+            .tasting-notes-panel-inner .tasting-category {
+                flex: 1 1 200px;
+                min-width: 180px;
+            }
+        }
+
+        /* Readability: industry standards (min 16px body, 1.5 line-height, sufficient contrast) */
+        .tasting-label {
+            font-size: 1rem;
+            line-height: 1.5;
+            letter-spacing: 0.05em;
+        }
         .tasting-value {
             color: var(--ivory);
-            font-size: 0.9rem;
-            line-height: 1.4;
+            font-size: 1rem;
+            line-height: 1.5;
         }
 
         .elegant-message {
@@ -783,59 +1058,122 @@
             background: rgba(212, 175, 55, 0.3);
         }
 
-        /* Footer */
+        /* Footer – robusto, responsive, armonizzato con luxury container */
         .luxury-footer {
-            background: rgba(10, 10, 10, 0.8);
-            border-top: 1px solid rgba(212, 175, 55, 0.1);
-            padding: 15px 20px;
+            display: block !important;
+            background: rgba(26, 26, 26, 0.65);
+            border-top: 1px solid rgba(212, 175, 55, 0.18);
+            padding: 1.75rem 1.5rem;
             flex-shrink: 0;
-            font-size: 10px;
+            font-family: 'Cormorant', serif;
         }
 
         .footer-content {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            color: var(--gold);
+            grid-template-columns: 1fr;
+            grid-template-areas:
+                "logo"
+                "info"
+                "social"
+                "copyright";
+            gap: 1.25rem;
+            max-width: 640px;
+            margin: 0 auto;
+            text-align: center;
         }
 
         .footer-logo {
+            grid-area: logo;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             font-family: 'Cinzel', serif;
             font-weight: 600;
-            letter-spacing: 1px;
-            grid-column: 1 / -1;
+            font-size: 1.1rem;
+            letter-spacing: 2.5px;
+            color: var(--gold);
+            text-transform: uppercase;
+            line-height: 1.3;
+        }
+
+        .footer-info {
+            grid-area: info;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem 1.25rem;
         }
 
         .footer-info p {
-            margin: 3px 0;
-            color: var(--ivory);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            font-size: 1rem;
+            color: rgba(245, 245, 240, 0.9);
+            font-weight: 400;
+            line-height: 1.4;
         }
 
         .footer-info i {
             color: var(--gold);
-            width: 12px;
+            font-size: 0.85rem;
+            opacity: 0.9;
         }
 
         .social-icons {
+            grid-area: social;
             display: flex;
-            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            gap: 1.25rem;
         }
 
         .social-icons a {
             color: var(--gold);
             text-decoration: none;
-            transition: color 0.3s;
+            transition: color 0.25s ease, opacity 0.25s ease;
+            opacity: 0.85;
         }
 
         .social-icons a:hover {
             color: var(--gold-light);
+            opacity: 1;
         }
 
         .copyright {
-            grid-column: 1 / -1;
-            text-align: center;
-            color: rgba(212, 175, 55, 0.5);
-            font-size: 9px;
+            grid-area: copyright;
+            display: block;
+            margin-top: 0.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(212, 175, 55, 0.15);
+            font-size: 0.85rem;
+            color: rgba(212, 175, 55, 0.6);
+            letter-spacing: 0.6px;
+            line-height: 1.4;
+        }
+
+        .copyright p {
+            margin: 0;
+        }
+
+        @media (min-width: 520px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                grid-template-areas:
+                    "logo logo"
+                    "info social"
+                    "copyright copyright";
+                gap: 1rem 1.5rem;
+            }
+            .footer-info {
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: flex-start;
+            }
+            .footer-info p { justify-content: flex-start; }
+            .social-icons { justify-content: flex-end; align-items: center; }
         }
 
         /* ==================== DAY MODE STYLES ==================== */
@@ -846,7 +1184,11 @@
         }
 
         :root[data-theme="day"] .luxury-container {
-            background: linear-gradient(135deg, #FDFBF7 0%, #F8F8F0 100%) !important;
+            background: #000 !important;
+            background-image: none !important;
+            background-size: auto !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
         }
 
         :root[data-theme="day"] .wine-details-top-bar {
@@ -882,6 +1224,19 @@
             color: #8B0000 !important;
         }
 
+        :root[data-theme="day"] {
+            --wine-title-glow-1: rgba(139, 0, 0, 0.216);
+            --wine-title-glow-2: rgba(139, 0, 0, 0.12);
+        }
+
+        :root[data-theme="day"] .wine-quick-info {
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .wine-quick-info .quick-info-tagline {
+            color: #333 !important;
+        }
+
         :root[data-theme="day"] .wine-description {
             background: rgba(245, 245, 240, 0.5) !important;
             color: #1a1a1a !important;
@@ -890,7 +1245,7 @@
 
         :root[data-theme="day"] .wine-meta {
             background: transparent !important;
-            border-color: rgba(139, 105, 20, 0.3) !important;
+            border: none !important;
         }
 
         :root[data-theme="day"] .meta-item {
@@ -954,13 +1309,13 @@
         }
 
         :root[data-theme="day"] .tasting-category {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(250, 250, 245, 0.85) 100%) !important;
+            background: transparent !important;
             border: 1px solid rgba(139, 105, 20, 0.3) !important;
             color: #1a1a1a !important;
         }
 
         :root[data-theme="day"] .tasting-category:hover {
-            background: rgba(212, 175, 55, 0.15) !important;
+            background: transparent !important;
             border-color: #C5A059 !important;
         }
 
@@ -970,6 +1325,22 @@
 
         :root[data-theme="day"] .tasting-value {
             color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-header {
+            background: rgba(253, 251, 247, 0.9) !important;
+            border-color: rgba(139, 105, 20, 0.35) !important;
+            color: #8B0000 !important;
+        }
+        :root[data-theme="day"] .tasting-notes-header:hover {
+            background: rgba(197, 160, 89, 0.12) !important;
+            color: #5a0000 !important;
+        }
+        :root[data-theme="day"] .tasting-notes-header:focus {
+            outline-color: #8B0000 !important;
+        }
+        :root[data-theme="day"] .tasting-notes-panel-inner {
+            border-top-color: rgba(139, 105, 20, 0.2) !important;
         }
 
         :root[data-theme="day"] .pairing-item {
@@ -1060,11 +1431,11 @@
         }
 
         :root[data-theme="day"] .luxury-footer {
-            background: rgba(250, 250, 245, 0.8) !important;
+            background: rgba(253, 251, 247, 0.85) !important;
             border-top: 1px solid rgba(139, 105, 20, 0.2) !important;
         }
 
-        :root[data-theme="day"] .footer-content {
+        :root[data-theme="day"] .footer-logo {
             color: #8B0000 !important;
         }
 
@@ -1082,6 +1453,11 @@
 
         :root[data-theme="day"] .social-icons a:hover {
             color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .copyright {
+            border-top-color: rgba(139, 105, 20, 0.2) !important;
+            color: rgba(26, 26, 26, 0.55) !important;
         }
 
         :root[data-theme="day"] .copyright {
@@ -1130,6 +1506,32 @@
 
         :root[data-theme="day"] .info-popup-trigger:hover {
             text-decoration-color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-overlay {
+            background: rgba(0, 0, 0, 0.3) !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-content {
+            background: #FDFBF7 !important;
+            border: 1px solid rgba(139, 105, 20, 0.3) !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-header {
+            background: #FDFBF7 !important;
+            border-bottom: 1px solid rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-title {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-close {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-close:hover {
+            background: rgba(197, 160, 89, 0.1) !important;
         }
 
         /* ==================== WINE LAB ==================== */
@@ -1736,10 +2138,9 @@
             <div class="wine-details-content">
                 <!-- Image Section -->
                 <div class="wine-image-section">
-                    <h1 class="wine-name" id="wineName">Loading...</h1>
-                    <!-- Tasting Notes (tra nome e immagine) -->
-                    <div id="tastingNotesContainer" style="display: none;">
-                        <!-- Populated by main.js -->
+                    <div class="wine-name-block">
+                        <h1 class="wine-name" id="wineName">Loading...</h1>
+                        <div id="wineQuickInfo" class="wine-quick-info" aria-live="polite"></div>
                     </div>
                     <div class="wine-image" id="wineImageContainer">
                         <i class="fas fa-wine-bottle wine-bottle" id="wineBottleIcon"></i>
@@ -1749,21 +2150,12 @@
 
                 <!-- Wine Info Section -->
                 <div class="wine-info-section">
-                    
                     <div class="wine-description" id="wineDescription" style="display: none;">
                         Loading wine description...
                     </div>
-                    
                     <div class="wine-meta" id="wineMeta">
                         <!-- Populated by main.js -->
                     </div>
-                
-                    <!-- Information and Producer triggers -->
-                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap;">
-                        <span class="info-popup-trigger" id="infoTrigger">Information</span>
-                        <span class="info-popup-trigger" id="producerTrigger" style="display: none;">Producer</span>
-                    </div>
-
                     <!-- Food Pairings -->
                     <div class="food-pairings" id="foodPairings" style="display: none;">
                         <h2 class="section-title">Food Pairings</h2>
@@ -1771,273 +2163,26 @@
                             <!-- Populated by main.js -->
                         </div>
                     </div>
-
-                <!-- Share Button -->
-            <div class="share-wine-section">
-                <button class="share-wine-btn" id="shareWineBtn">
-                    <i class="fas fa-share-alt"></i> SHARE WINE
-                </button>
                 </div>
 
-                    <!-- Wine Lab -->
-                    <section class="wine-lab" id="wineLabSection">
-                        <div class="wine-lab-header">
-                            <h2 class="wine-lab-title">Wine Lab</h2>
-                            <button class="wine-lab-toggle" id="wineLabToggle" aria-expanded="false">Create Your Wine Card</button>
-                        </div>
-                        <div class="wine-lab-panel" id="wineLabPanel" hidden>
-                            <div class="wine-lab-controls">
-                                <button class="wine-lab-edit-btn" id="wineLabEditBtn">✏️ Edit Mode</button>
-                                <button class="wine-lab-save-btn" id="wineLabSaveBtn">💾 Save</button>
-                                <button class="wine-lab-download-btn" id="wineLabDownloadBtn">📸 Download</button>
-                                <button class="wine-lab-reset-btn" id="wineLabResetBtn">🔄 Reset</button>
-                            </div>
-                            <div class="wine-lab-indicator" id="wineLabIndicator">Edit mode active - click any text to edit.</div>
-                            <div class="wine-lab-card" id="wineLabCard">
-                                <div class="wine-lab-card-header">
-                                    <h3><span class="wine-lab-editable" data-field="winery">Producer</span> - <span class="wine-lab-editable" data-field="wineName">Wine Name</span> <span class="wine-lab-editable" data-field="vintage">NV</span></h3>
-                                    <span class="wine-lab-type wine-lab-editable" data-field="wineType">Red</span>
-                                </div>
-                                <div class="wine-lab-content">
-                                    <div class="wine-lab-section">
-                                        <div class="wine-lab-logo-bg">
-                                            <picture>
-                                                <source srcset="./image/gcaLogo.webp" type="image/webp">
-                                                <img src="./image/gcaLogo.png" alt="GCA logo" loading="lazy" decoding="async">
-                                            </picture>
-                                        </div>
-                                        <div class="wine-lab-section-body">
-                                            <h3 class="wine-lab-editable" data-field="fullWineName">Wine Name NV</h3>
-                                            <p class="wine-lab-editable" data-field="classification">Classification / Appellation</p>
-                                            <div class="wine-lab-info-grid">
-                                                <div class="wine-lab-info-item">
-                                                    <strong>Producer:</strong>
-                                                    <span class="wine-lab-editable" data-field="producer">Producer</span>
-                                                </div>
-                                                <div class="wine-lab-info-item">
-                                                    <strong>Grapes:</strong>
-                                                    <span class="wine-lab-editable" data-field="grapes">Grapes</span>
-                                                </div>
-                                                <div class="wine-lab-info-item">
-                                                    <strong>Vintage:</strong>
-                                                    <span class="wine-lab-editable" data-field="vintageSpec">NV</span>
-                                                </div>
-                                                <div class="wine-lab-info-item">
-                                                    <strong>Alcohol:</strong>
-                                                    <span class="wine-lab-editable" data-field="alcohol">N/A</span>
-                                                </div>
-                                                <div class="wine-lab-info-item">
-                                                    <strong>Aging:</strong>
-                                                    <span class="wine-lab-editable" data-field="aging">Aging details</span>
-                                                </div>
-                                                <div class="wine-lab-info-item">
-                                                    <strong>Serving:</strong>
-                                                    <span class="wine-lab-editable" data-field="servingTemp">16-18°C</span>
-                                                </div>
-                                                <div class="wine-lab-info-item">
-                                                    <strong>Cellaring:</strong>
-                                                    <span class="wine-lab-editable" data-field="cellaring">N/A</span>
-                                                </div>
-                                            </div>
-                                            <div class="wine-lab-summary">
-                                                <h4>Vintage <span class="wine-lab-editable" data-field="vintageYear">NV</span></h4>
-                                                <p class="wine-lab-editable" data-field="vintageDescription">Vintage notes and story.</p>
-                                                <h4>Ideal Food Pairings</h4>
-                                                <p class="wine-lab-editable" data-field="foodPairings">Add food pairings here.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="wine-lab-section">
-                                        <div class="wine-lab-logo-bg">
-                                            <picture>
-                                                <source srcset="./image/gcaLogo.webp" type="image/webp">
-                                                <img src="./image/gcaLogo.png" alt="GCA logo" loading="lazy" decoding="async">
-                                            </picture>
-                                        </div>
-                                        <div class="wine-lab-section-body">
-                                            <h3 class="wine-lab-chart-title">Organoleptic Profile</h3>
-                                            <p class="wine-lab-chart-hint" style="text-align: center; font-family: var(--font-body); font-size: var(--fs-200); color: var(--gold); margin-bottom: var(--space-md); font-style: italic;">
-                                                💡 Click on the charts to edit values (Edit Mode must be active)
-                                            </p>
-                                            <div class="wine-lab-chart-row">
-                                                <div class="wine-lab-chart-wrapper">
-                                                    <div class="wine-lab-chart-clickable">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%" id="wineLabRadarChart">
-                                                            <text x="200" y="30" font-family="Cinzel, serif" font-size="18" fill="var(--wine-lab-primary)" text-anchor="middle" font-weight="bold">Body and Structure</text>
-                                                            <polygon points="200,70 270,110 270,190 200,230 130,190 130,110" fill="var(--wine-lab-light-bg)" stroke="var(--wine-lab-accent)" stroke-width="1"/>
-                                                            <polygon points="200,90 250,120 250,180 200,210 150,180 150,120" fill="var(--wine-lab-light-bg)" stroke="var(--wine-lab-accent)" stroke-width="1"/>
-                                                            <polygon points="200,110 230,130 230,170 200,190 170,170 170,130" fill="var(--wine-lab-light-bg)" stroke="var(--wine-lab-accent)" stroke-width="1"/>
-                                                            <line x1="200" y1="150" x2="200" y2="70" stroke="rgba(212, 175, 55, 0.3)" stroke-width="1"/>
-                                                            <line x1="200" y1="150" x2="270" y2="190" stroke="rgba(212, 175, 55, 0.3)" stroke-width="1"/>
-                                                            <line x1="200" y1="150" x2="270" y2="110" stroke="rgba(212, 175, 55, 0.3)" stroke-width="1"/>
-                                                            <line x1="200" y1="150" x2="200" y2="230" stroke="rgba(212, 175, 55, 0.3)" stroke-width="1"/>
-                                                            <line x1="200" y1="150" x2="130" y2="190" stroke="rgba(212, 175, 55, 0.3)" stroke-width="1"/>
-                                                            <line x1="200" y1="150" x2="130" y2="110" stroke="rgba(212, 175, 55, 0.3)" stroke-width="1"/>
-                                                            <text id="wineLabRadarLabel1" x="200" y="65" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="middle">Body</text>
-                                                            <text id="wineLabRadarLabel2" x="280" y="110" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="start">Tannins</text>
-                                                            <text id="wineLabRadarLabel3" x="280" y="190" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="start">Alcohol</text>
-                                                            <text id="wineLabRadarLabel4" x="200" y="240" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="middle">Persistence</text>
-                                                            <text id="wineLabRadarLabel5" x="120" y="190" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="end">Acidity</text>
-                                                            <text id="wineLabRadarLabel6" x="120" y="110" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="end">Complexity</text>
-                                                            <polygon id="wineLabRadarPolygon" points="200,102 241,126 255,182 200,198 144,182 158,126" fill="rgba(var(--wine-lab-rgb-primary),0.5)" stroke="var(--wine-lab-primary)" stroke-width="2"/>
-                                                            <circle id="wineLabRadarPoint1" cx="200" cy="102" r="4" fill="var(--wine-lab-primary)"/>
-                                                            <circle id="wineLabRadarPoint2" cx="241" cy="126" r="4" fill="var(--wine-lab-primary)"/>
-                                                            <circle id="wineLabRadarPoint3" cx="255" cy="182" r="4" fill="var(--wine-lab-primary)"/>
-                                                            <circle id="wineLabRadarPoint4" cx="200" cy="198" r="4" fill="var(--wine-lab-primary)"/>
-                                                            <circle id="wineLabRadarPoint5" cx="144" cy="182" r="4" fill="var(--wine-lab-primary)"/>
-                                                            <circle id="wineLabRadarPoint6" cx="158" cy="126" r="4" fill="var(--wine-lab-primary)"/>
-                                                            <rect x="150" y="260" width="10" height="10" fill="rgba(var(--wine-lab-rgb-primary),0.5)" stroke="var(--wine-lab-primary)" />
-                                                            <text x="165" y="268" font-family="Cormorant, serif" font-size="12" fill="var(--ivory)" id="wineLabRadarLegend">Wine Name NV</text>
-                                                        </svg>
-                                                    </div>
-                                                    <div class="wine-lab-chart-editor" id="wineLabRadarEditor">
-                                                        <h4>Edit Structure Profile</h4>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-radar-label-input" id="wineLabBodyName" value="Body">
-                                                            <input type="range" min="1" max="10" value="6" id="wineLabBodySlider">
-                                                            <span id="wineLabBodyValue">6</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-radar-label-input" id="wineLabTanninsName" value="Tannins">
-                                                            <input type="range" min="1" max="10" value="6" id="wineLabTanninsSlider">
-                                                            <span id="wineLabTanninsValue">6</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-radar-label-input" id="wineLabAlcoholName" value="Alcohol">
-                                                            <input type="range" min="1" max="10" value="6" id="wineLabAlcoholSlider">
-                                                            <span id="wineLabAlcoholValue">6</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-radar-label-input" id="wineLabPersistenceName" value="Persistence">
-                                                            <input type="range" min="1" max="10" value="6" id="wineLabPersistenceSlider">
-                                                            <span id="wineLabPersistenceValue">6</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-radar-label-input" id="wineLabAcidityName" value="Acidity">
-                                                            <input type="range" min="1" max="10" value="6" id="wineLabAciditySlider">
-                                                            <span id="wineLabAcidityValue">6</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-radar-label-input" id="wineLabComplexityName" value="Complexity">
-                                                            <input type="range" min="1" max="10" value="6" id="wineLabComplexitySlider">
-                                                            <span id="wineLabComplexityValue">6</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="wine-lab-chart-wrapper">
-                                                    <div class="wine-lab-chart-clickable">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 350" width="100%" height="100%" id="wineLabAromaChart">
-                                                            <text x="200" y="30" font-family="Cinzel, serif" font-size="18" fill="var(--wine-lab-primary)" text-anchor="middle" font-weight="bold">Aromatic Profile</text>
-                                                            <rect x="120" y="70" width="200" height="25" fill="var(--wine-lab-light-bg)" stroke="var(--wine-lab-accent)" stroke-width="1"/>
-                                                            <rect x="120" y="105" width="200" height="25" fill="var(--wine-lab-light-bg)" stroke="var(--wine-lab-accent)" stroke-width="1"/>
-                                                            <rect x="120" y="140" width="200" height="25" fill="var(--wine-lab-light-bg)" stroke="var(--wine-lab-accent)" stroke-width="1"/>
-                                                            <rect x="120" y="175" width="200" height="25" fill="var(--wine-lab-light-bg)" stroke="var(--wine-lab-accent)" stroke-width="1"/>
-                                                            <rect x="120" y="210" width="200" height="25" fill="var(--wine-lab-light-bg)" stroke="var(--wine-lab-accent)" stroke-width="1"/>
-                                                            <rect x="120" y="245" width="200" height="25" fill="var(--wine-lab-light-bg)" stroke="var(--wine-lab-accent)" stroke-width="1"/>
-                                                            <rect x="120" y="280" width="200" height="25" fill="var(--wine-lab-light-bg)" stroke="var(--wine-lab-accent)" stroke-width="1"/>
-                                                            <text id="wineLabAromaLabel1" x="115" y="87" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="end">Red Fruit</text>
-                                                            <text id="wineLabAromaLabel2" x="115" y="122" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="end">Black Fruit</text>
-                                                            <text id="wineLabAromaLabel3" x="115" y="157" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="end">Floral</text>
-                                                            <text id="wineLabAromaLabel4" x="115" y="192" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="end">Vanilla</text>
-                                                            <text id="wineLabAromaLabel5" x="115" y="227" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="end">Spice</text>
-                                                            <text id="wineLabAromaLabel6" x="115" y="262" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="end">Earth</text>
-                                                            <text id="wineLabAromaLabel7" x="115" y="297" font-family="Cormorant, serif" font-size="14" fill="var(--ivory)" text-anchor="end">Coffee</text>
-                                                            <rect id="wineLabRedFruitBar" x="120" y="70" width="80" height="25" fill="rgba(var(--wine-lab-rgb-primary),0.7)"/>
-                                                            <rect id="wineLabBlackFruitBar" x="120" y="105" width="80" height="25" fill="rgba(var(--wine-lab-rgb-primary),0.7)"/>
-                                                            <rect id="wineLabFloralBar" x="120" y="140" width="60" height="25" fill="rgba(var(--wine-lab-rgb-primary),0.7)"/>
-                                                            <rect id="wineLabVanillaBar" x="120" y="175" width="60" height="25" fill="rgba(var(--wine-lab-rgb-primary),0.7)"/>
-                                                            <rect id="wineLabSpiceBar" x="120" y="210" width="60" height="25" fill="rgba(var(--wine-lab-rgb-primary),0.7)"/>
-                                                            <rect id="wineLabEarthBar" x="120" y="245" width="40" height="25" fill="rgba(var(--wine-lab-rgb-primary),0.7)"/>
-                                                            <rect id="wineLabCoffeeBar" x="120" y="280" width="40" height="25" fill="rgba(var(--wine-lab-rgb-primary),0.7)"/>
-                                                            <text x="120" y="325" font-family="Cormorant, serif" font-size="12" fill="var(--ivory)">Low</text>
-                                                            <text x="220" y="325" font-family="Cormorant, serif" font-size="12" fill="var(--ivory)" text-anchor="middle">Medium</text>
-                                                            <text x="320" y="325" font-family="Cormorant, serif" font-size="12" fill="var(--ivory)" text-anchor="end">High</text>
-                                                            <line x1="120" y1="330" x2="320" y2="330" stroke="rgba(212, 175, 55, 0.3)" stroke-width="1"/>
-                                                            <line x1="120" y1="328" x2="120" y2="332" stroke="rgba(212, 175, 55, 0.3)" stroke-width="1"/>
-                                                            <line x1="220" y1="328" x2="220" y2="332" stroke="rgba(212, 175, 55, 0.3)" stroke-width="1"/>
-                                                            <line x1="320" y1="328" x2="320" y2="332" stroke="rgba(212, 175, 55, 0.3)" stroke-width="1"/>
-                                                        </svg>
-                                                    </div>
-                                                    <div class="wine-lab-chart-editor" id="wineLabAromaEditor">
-                                                        <h4>Edit Aromatic Profile</h4>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-aroma-name" id="wineLabRedFruitName" value="Red Fruit">
-                                                            <input type="range" min="0" max="200" value="80" id="wineLabRedFruitSlider">
-                                                            <span id="wineLabRedFruitValue">4</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-aroma-name" id="wineLabBlackFruitName" value="Black Fruit">
-                                                            <input type="range" min="0" max="200" value="80" id="wineLabBlackFruitSlider">
-                                                            <span id="wineLabBlackFruitValue">4</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-aroma-name" id="wineLabFloralName" value="Floral">
-                                                            <input type="range" min="0" max="200" value="60" id="wineLabFloralSlider">
-                                                            <span id="wineLabFloralValue">3</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-aroma-name" id="wineLabVanillaName" value="Vanilla">
-                                                            <input type="range" min="0" max="200" value="60" id="wineLabVanillaSlider">
-                                                            <span id="wineLabVanillaValue">3</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-aroma-name" id="wineLabSpiceName" value="Spice">
-                                                            <input type="range" min="0" max="200" value="60" id="wineLabSpiceSlider">
-                                                            <span id="wineLabSpiceValue">3</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-aroma-name" id="wineLabEarthName" value="Earth">
-                                                            <input type="range" min="0" max="200" value="40" id="wineLabEarthSlider">
-                                                            <span id="wineLabEarthValue">2</span>
-                                                        </div>
-                                                        <div class="wine-lab-slider-item">
-                                                            <input type="text" class="wine-lab-aroma-name" id="wineLabCoffeeName" value="Coffee">
-                                                            <input type="range" min="0" max="200" value="40" id="wineLabCoffeeSlider">
-                                                            <span id="wineLabCoffeeValue">2</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="wine-lab-section">
-                                        <div class="wine-lab-logo-bg">
-                                            <picture>
-                                                <source srcset="./image/gcaLogo.webp" type="image/webp">
-                                                <img src="./image/gcaLogo.png" alt="GCA logo" loading="lazy" decoding="async">
-                                            </picture>
-                                        </div>
-                                        <div class="wine-lab-section-body">
-                                            <h3 class="wine-lab-chart-title">Tasting Notes</h3>
-                                            <div class="wine-lab-info-grid">
-                                                <div>
-                                                    <h4>Visual</h4>
-                                                    <p class="wine-lab-editable" data-field="visual">Visual notes.</p>
-                                                </div>
-                                                <div>
-                                                    <h4>Olfactory</h4>
-                                                    <p class="wine-lab-editable" data-field="olfactory">Aromatic notes.</p>
-                                                </div>
-                                                <div>
-                                                    <h4>Gustatory</h4>
-                                                    <p class="wine-lab-editable" data-field="gustatory">Palate notes.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="wine-lab-footer">
-                                    &copy;<span class="wine-lab-editable" data-field="author">Gran Caffè L'Aquila</span> <span class="wine-lab-editable" data-field="year">2025</span> -
-                                    <span class="wine-lab-editable" data-field="footerWinery">Producer</span> -
-                                    <span class="wine-lab-editable" data-field="footerWine">Wine Name</span>. Consume responsibly.
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                <!-- Tasting Notes: shown in popup (button in wine-image-section) -->
             </div>
         </main>
+
+        <!-- Tasting Notes Popup -->
+        <div class="tasting-notes-popup-overlay" id="tastingNotesPopup" role="dialog" aria-modal="true" aria-labelledby="tastingNotesPopupTitle" aria-hidden="true">
+            <div class="tasting-notes-popup-content">
+                <div class="tasting-notes-popup-header">
+                    <h2 class="tasting-notes-popup-title" id="tastingNotesPopupTitle">Tasting Notes</h2>
+                    <button type="button" class="tasting-notes-popup-close" id="tastingNotesPopupClose" aria-label="Chiudi">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="tasting-notes-popup-body" id="tastingNotesPopupBody">
+                    <!-- Content populated by main.js -->
+                </div>
+            </div>
+        </div>
 
         <!-- Info Popup Modal -->
         <div class="info-popup-overlay" id="infoPopup">

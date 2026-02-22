@@ -3,59 +3,59 @@
  * e per ottenere la descrizione della sottocategoria
  */
 
-// Sottocategorie valide da mostrare
+// Valid subcategories to display (descriptions in English)
 const VALID_SUBCATEGORIES = {
     // Sparkling
     'METODO MARTINOTTI': {
         show: true,
-        description: 'Metodo Martinotti (Charmat) - Seconda fermentazione in autoclave'
+        description: 'Martinotti (Charmat) method - Second fermentation in tank'
     },
     'METODO ANCESTRALE': {
         show: true,
-        description: 'Metodo Ancestrale - Fermentazione naturale in bottiglia'
+        description: 'Ancestral method - Natural fermentation in bottle'
     },
     'METODO CLASSICO': {
         show: true,
-        description: 'Metodo Classico - Seconda fermentazione in bottiglia (Champagne method)'
+        description: 'Classic method - Second fermentation in bottle (Champagne method)'
     },
-    // Toscana
+    // Tuscany
     'TOSCANA ROSSO': {
         show: true,
-        description: 'Vini rossi della Toscana'
+        description: 'Tuscan red wines'
     },
     'CHIANTI': {
         show: true,
-        description: 'Chianti DOCG - Il vino toscano più famoso'
+        description: 'Chianti DOCG - The most famous Tuscan wine'
     },
     'MONTALCINO': {
         show: true,
-        description: 'Brunello di Montalcino DOCG - Il re dei vini toscani'
+        description: 'Brunello di Montalcino DOCG - The king of Tuscan wines'
     },
     'SUPERTUSCAN': {
         show: true,
-        description: 'Super Tuscan - Vini innovativi della Toscana'
+        description: 'Super Tuscan - Innovative Tuscan wines'
     },
     // Veneto
     'VENETO ROSSO': {
         show: true,
-        description: 'Vini rossi del Veneto'
+        description: 'Veneto red wines'
     },
     'AMARONE': {
         show: true,
-        description: 'Amarone della Valpolicella DOCG - Vino passito secco'
+        description: 'Amarone della Valpolicella DOCG - Dry passito wine'
     },
-    // Piemonte
+    // Piedmont
     'PIEMONTE ROSSO': {
         show: true,
-        description: 'Vini rossi del Piemonte'
+        description: 'Piedmont red wines'
     },
     'BAROLO DOCG': {
         show: true,
-        description: 'Barolo DOCG - Il re dei vini'
+        description: 'Barolo DOCG - The king of wines'
     },
     'BARBARESCO DOCG': {
         show: true,
-        description: 'Barbaresco DOCG - La regina dei vini'
+        description: 'Barbaresco DOCG - The queen of wines'
     }
 };
 

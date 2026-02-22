@@ -3,68 +3,78 @@
  * Handles caching for offline functionality
  */
 
-const CACHE_NAME = 'gca-wine-list-v2';
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_NAME = 'gca-wine-list-v5';
+const CACHE_VERSION = 'v1.2.2';
 
 // Core assets to cache immediately on install
 const CORE_ASSETS = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/main.js',
-  '/js/subcategory-helper.js',
-  '/js/wineries.js',
-  '/manifest.json'
+  'index.html',
+  'css/style.css',
+  'js/main.js',
+  'js/subcategory-helper.js',
+  'js/wineries.js',
+  'manifest.json'
 ];
 
 // Additional pages to cache
 const PAGE_ASSETS = [
-  '/wines.html',
-  '/wine-map.html',
-  '/wine-details.html',
-  '/wine-details-tlc11.html',
-  '/WineByTheGlass.html',
-  '/OurStory.html',
-  '/regions.html',
-  '/SparklingWineDoc.html',
-  '/wine-comparison.html',
-  '/wine_manager.html',
-  '/404.html'
+  'wines.html',
+  'wine-map.html',
+  'wine-details.html',
+  'wine-details-tlc11.html',
+  'WineByTheGlass.html',
+  'OurStory.html',
+  'regions.html',
+  'SparklingWineDoc.html',
+  'wine-comparison.html',
+  'wine_manager.html',
+  '404.html'
 ];
 
 // Images to cache
 const IMAGE_ASSETS = [
-  '/image/gcaLogo.png',
-  '/image/gcaLogo.webp',
-  '/image/gcaLogoWall.jpeg',
-  '/image/gcaLogoWall.webp',
-  '/image/logoFull.svg',
-  '/image/secondFloor.png',
-  '/image/secondFloor.webp',
-  '/image/OldGca.jpg',
-  '/image/OldGca.webp',
-  '/image/gl00.png',
-  '/image/gl00.webp',
-  '/image/glArancione.png',
-  '/image/glArancione.webp',
-  '/image/glassRed.png',
-  '/image/glassRed.webp',
-  '/image/glassWhite.png',
-  '/image/glassWhite.webp',
-  '/image/glRose.png',
-  '/image/glRose.webp',
-  '/image/glSparkling.png',
-  '/image/glSparkling.webp',
-  '/image/Ancestral-PetNat.svg',
-  '/image/Martinotti.svg',
-  '/image/MetodoClassico.svg'
+  'image/gcaLogo.png',
+  'image/gcaLogo.webp',
+  'image/gcaLogoWall.jpeg',
+  'image/gcaLogoWall.webp',
+  'image/logoFull.svg',
+  'image/icon-72x72.png',
+  'image/icon-96x96.png',
+  'image/icon-120x120.png',
+  'image/icon-128x128.png',
+  'image/icon-144x144.png',
+  'image/icon-152x152.png',
+  'image/icon-167x167.png',
+  'image/icon-180x180.png',
+  'image/icon-192x192.png',
+  'image/icon-384x384.png',
+  'image/icon-512x512.png',
+  'image/secondFloor.png',
+  'image/secondFloor.webp',
+  'image/OldGca.jpg',
+  'image/OldGca.webp',
+  'image/gl00.png',
+  'image/gl00.webp',
+  'image/glArancione.png',
+  'image/glArancione.webp',
+  'image/glassRed.png',
+  'image/glassRed.webp',
+  'image/glassWhite.png',
+  'image/glassWhite.webp',
+  'image/glRose.png',
+  'image/glRose.webp',
+  'image/glSparkling.png',
+  'image/glSparkling.webp',
+  'image/Ancestral-PetNat.svg',
+  'image/Martinotti.svg',
+  'image/MetodoClassico.svg'
 ];
 
 // Data files to cache
 const DATA_ASSETS = [
-  '/data/wines.json',
-  '/data/FoodParingWineDetails.json',
-  '/data/gca_wine_link.json'
+  'data/wines.json',
+  'data/FoodParingWineDetails.json',
+  'data/gca_wine_link.json'
 ];
 
 // External CDN resources (cached on first request)
@@ -158,6 +168,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
+  // Bypass SW on localhost so fetches go to the server; avoids 503 from createOfflineResponse
+  // when network fails (wrong server root, server down) and cache miss.
+  if (requestUrl.hostname === 'localhost' || requestUrl.hostname === '127.0.0.1') {
+    return;
+  }
+  
   // Handle different resource types with appropriate strategies
   if (isStaticAsset(requestUrl)) {
     // Cache-First strategy for static assets
@@ -221,7 +237,16 @@ async function networkFirst(request) {
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+    // #region agent log
+    var u = new URL(request.url);
+    if (u.pathname.includes('/data/wines.json')) {
+      (function(){
+        var p = {location:'sw.js:networkFirst:createOffline',message:'SW returning 503 for wines.json',data:{url:request.url,hadCache:!!cachedResponse},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'h1'};
+        try { console.log('[DEBUG]', JSON.stringify(p)); } catch(e) {}
+        fetch('http://127.0.0.1:7247/ingest/fe36653c-3e53-480d-b7e2-efd99bb3957a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).catch(function(){});
+      })();
+    }
+    // #endregion
     return createOfflineResponse(request);
   }
 }
@@ -257,7 +282,8 @@ function createOfflineResponse(request) {
   
   // For HTML pages, return the cached index or 404
   if (request.headers.get('accept')?.includes('text/html') || url.pathname.endsWith('.html')) {
-    return caches.match('/index.html')
+    // Use relative path so it works when hosted in a subdirectory (e.g., GitHub Pages).
+    return caches.match('index.html')
       .then((response) => response || new Response(
         `<!DOCTYPE html>
         <html lang="en">
@@ -355,7 +381,10 @@ self.addEventListener('message', (event) => {
   }
   
   if (event.data && event.data.type === 'GET_VERSION') {
-    event.ports[0].postMessage({ version: CACHE_VERSION });
+    // Check if ports array exists and has at least one port
+    if (event.ports && event.ports.length > 0 && event.ports[0]) {
+      event.ports[0].postMessage({ version: CACHE_VERSION });
+    }
   }
 });
 

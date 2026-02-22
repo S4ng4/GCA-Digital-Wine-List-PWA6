@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Wine Comparison - Gran Caffè L'Aquila</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant:wght@300;400;500&display=swap" rel="stylesheet">
@@ -1021,7 +1021,9 @@
             async loadWineData() {
                 try {
                     const winesPath = getPath('./data/wines.json');
-                    const response = await fetch(winesPath + '?v=' + Date.now());
+                    // Remove cache busting to allow browser caching for faster loads
+                    const cacheBuster = window.location.hostname === 'localhost' ? '?v=' + Date.now() : '';
+                    const response = await fetch(winesPath + cacheBuster);
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const data = await response.json();
                     this.wines = data.wines || [];
