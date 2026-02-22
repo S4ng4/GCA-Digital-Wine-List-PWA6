@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Gran Caffè L'Aquila - Wine Collection</title>
+    <!-- Bootstrap 5.3 CSS (HTTPS CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- Font Awesome (HTTPS CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <!-- Google Fonts (HTTPS) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant:wght@300;400;500;600&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS (HTTPS CDN) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./css/style.css?v=20250124">
+    <style>
+        /* Floating search container with project colors */
+        #floating-controls {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(26, 26, 26, 0.95);
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-width: 280px;
+            max-width: 90%;
+            backdrop-filter: blur(10px);
+        }
+        
+        #floating-search-input {
+            width: 100%;
+            padding: 10px 16px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            background: rgba(14, 14, 14, 0.8);
+            color: var(--ivory, #F2F2F2);
+            font-family: var(--font-body, 'Cormorant', serif);
+            transition: all 0.3s ease;
+        }
+        
+        #floating-search-input::placeholder {
+            color: rgba(242, 242, 242, 0.5);
+        }
+        
+        #floating-search-input:focus {
+            border-color: var(--gold, #D4AF37);
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+        }
+        
+        #small-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .small-button {
+            padding: 6px 14px;
+            background-color: var(--gold, #D4AF37);
+            color: var(--black, #0E0E0E);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: var(--font-heading, 'Cinzel', serif);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+        
+        .small-button:hover {
+            background-color: var(--gold-light, #F4CF67);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+        }
+        
+        .small-button:active {
+            transform: translateY(0);
+        }
+        
+        /* Bottom region buttons */
+        #region-buttons { 
+            position: absolute; 
+            bottom: 0; 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center;
+            background: rgba(14, 14, 14, 0.95);
+            padding: 12px 8px;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.6);
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .region-button { 
+            padding: 10px 18px; 
+            background-color: transparent; 
+            color: var(--ivory, #F2F2F2);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            font-family: var(--font-heading, 'Cinzel', serif);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            min-width: 80px;
+        }
+        
+        .region-button:hover { 
+            background-color: var(--gold, #D4AF37);
+            color: var(--black, #0E0E0E);
+            border-color: var(--gold, #D4AF37);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+        }
+        
+        .region-button:active {
+            transform: translateY(0);
+        }
+        
+        /* Adjust map container to account for bottom buttons */
+        .map-wrapper {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #map {
+            position: absolute;
+            top: -30px;
+            bottom: 60px;
+            width: 100%;
+        }
+        
+        /* Tablet-specific styles */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            #map {
+                bottom: 60px;
+            }
+            
+            #floating-controls {
+                top: 10px;
+                min-width: 320px;
+                padding: 14px 18px;
+            }
+            
+            #region-buttons {
+                padding: 14px 12px;
+            }
+            
+            .region-button {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 767px) {
+            #map {
+                bottom: 60px;
+            }
+            
+            #floating-controls {
+                top: 10px;
+                min-width: 90%;
+                max-width: 95%;
+                padding: 10px 12px;
+                gap: 8px;
+            }
+            
+            #floating-search-input {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+            
+            .small-button {
+                padding: 5px 12px;
+                font-size: 11px;
+            }
+            
+            #region-buttons {
+                padding: 10px 6px;
+                gap: 6px;
+            }
+            
+            .region-button {
+                padding: 8px 12px;
+                font-size: 11px;
+                min-width: 70px;
+            }
+        }
+        
+        /* Desktop - hide floating controls if search bar exists */
+        @media (min-width: 1024px) {
+            #floating-controls {
+                display: none; /* Hide on desktop where search bar exists */
+            }
+            
+            #region-buttons {
+                display: none; /* Hide on desktop - use sidebar instead */
+            }
+        }
+    </style>
+</head>
+<body class="home-page">
+    <!-- Luxury Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <picture>
+                    <source srcset="./image/gcaLogo.webp" type="image/webp">
+                    <img src="./image/gcaLogo.png" alt="Gran Caffè L'Aquila Logo" class="loading-logo-image" decoding="async">
+                </picture>
+                <div class="countdown-ring" aria-hidden="true">
+                    <svg viewBox="0 0 120 120">
+                        <defs>
+                            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#D4AF37" />
+                                <stop offset="100%" stop-color="#B8860B" />
+                            </linearGradient>
+                        </defs>
+                        <rect class="ring-bg" x="6" y="6" width="108" height="108" rx="12" ry="12" />
+                        <rect class="ring-fg" id="ringProgress" x="6" y="6" width="108" height="108" rx="12" ry="12" />
+                    </svg>
+                </div>
+                <div class="loading-message" id="loadingMessage" aria-live="polite">Loading…</div>
+            </div>
+            <div class="loading-extras">
+                <div class="gold-bokeh">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="italian-flag-bokeh">
+                    <span class="red-bokeh"></span>
+                    <span class="white-bokeh"></span>
+                    <span class="green-bokeh"></span>
+                </div>
+            </div>
+            <!-- Chalkboard notes for user guidance -->
+            <div class="chalkboard-notes">
+                <div class="chalk-note note-1">
+                    <div class="chalk-text">Tap a region on the map to explore wines</div>
+                </div>
+                <div class="chalk-note note-2">
+                    <div class="chalk-text">Use the search bar to find wines by name, producer, or varietal</div>
+                </div>
+                <div class="chalk-note note-3">
+                    <div class="chalk-text">Scroll through wine cards to discover your favorites</div>
+                </div>
+            </div>
+        </div>
+    </div>
+            
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- Mobile Side Menu -->
+    <nav class="mobile-side-menu" id="mobileSideMenu">
+        <div class="mobile-menu-header">
+            <button class="mobile-menu-close" id="mobileMenuClose">
+                <i class="fas fa-arrow-left"></i>
+                <span>Close</span>
+            </button>
+            <h2 class="mobile-menu-title">Gran Caffe Experience</h2>
+        </div>
+        <div class="mobile-menu-categories" id="mobileMenuCategories">
+            <!-- Wine categories will be populated dynamically -->
+        </div>
+    </nav>
+
+    <!-- Search Popup for Menu -->
+    <div class="mobile-menu-search-popup" id="mobileMenuSearchPopup" style="display: none;">
+        <div class="mobile-menu-search-popup-overlay" id="mobileMenuSearchPopupOverlay"></div>
+        <div class="mobile-menu-search-popup-content">
+            <div class="mobile-menu-search-popup-header">
+                <h3 class="mobile-menu-search-popup-title">Search Wines</h3>
+                <button class="mobile-menu-search-popup-close" id="mobileMenuSearchPopupClose" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-menu-search-popup-body">
+                <div class="mobile-menu-search-popup-input-wrapper">
+                    <i class="fas fa-search mobile-menu-search-popup-icon"></i>
+                    <input type="text" id="mobileMenuSearchPopupInput" class="mobile-menu-search-popup-input" placeholder="Search wines by name, producer, varietal, or region..." autocomplete="off">
+                    <!-- Autocomplete Dropdown -->
+                    <div class="search-autocomplete-dropdown mobile-menu-search-popup-autocomplete" id="mobileMenuSearchPopupAutocomplete" style="display: none;">
+                        <div class="autocomplete-suggestions" id="mobileMenuSearchPopupSuggestions"></div>
+                    </div>
+                </div>
+                <!-- Quick Search Buttons in Popup -->
+                <div class="mobile-menu-search-popup-quick-buttons">
+                    <button class="mobile-menu-search-popup-quick-btn" id="mobileMenuSearchPopupOrganic" data-filter="organic">
+                        <span>Organic</span>
+                    </button>
+                    <button class="mobile-menu-search-popup-quick-btn" id="mobileMenuSearchPopupFancy" data-filter="fancy">
+                        <span>Feeling Fancy</span>
+                    </button>
+                    <button class="mobile-menu-search-popup-quick-btn" id="mobileMenuSearchPopupVarietals" data-filter="varietals">
+                        <span>Varietals</span>
+                    </button>
+                    <button class="mobile-menu-search-popup-quick-btn compare-wines-btn" id="mobileMenuSearchPopupCompare" onclick="window.location.href='wine-comparison.html'" style="display: none;">
+                        <i class="fas fa-balance-scale"></i>
+                        <span>Compare Wines</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Home Button -->
+    <a href="./index.html" class="fixed-home-btn" aria-label="Back to Home">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="main-layout">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <!-- Mobile Menu Button (visible on mobile only) -->
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open Menu">
+                <span class="burger-line"></span>
+                <span class="burger-line"></span>
+                <span class="burger-line"></span>
+            </button>
+            
+            <div class="logo" onclick="window.location.href='./index.html'">
+                <picture>
+                    <source srcset="./image/gcaLogo.webp" type="image/webp">
+                    <img src="./image/gcaLogo.png" alt="Gran Caffè L'Aquila Logo" class="logo-image" decoding="async">
+                </picture>
+            </div>
+            <div class="nav-title-section">
+                <h1 class="nav-title">Gran Caffè L'Aquila</h1>
+                <p class="nav-subtitle">Fine Wine Collection</p>
+            </div>
+            
+            <!-- Mobile Search Button (visible on mobile only) -->
+            <button class="mobile-search-btn" id="mobileSearchBtn" aria-label="Search">
+                <i class="fas fa-search"></i>
+            </button>
+        </nav>
+
+        <!-- Mobile Search Bar (positioned below nav on mobile only) -->
+        <div class="mobile-search-bar-container" id="mobileSearchBarContainer">
+            <div class="mobile-search-wrapper">
+                <div class="mobile-search-input-wrapper">
+                    <i class="fas fa-search mobile-search-icon"></i>
+                    <input type="text" id="mobileSearchInput" name="search" class="mobile-search-input" placeholder=" " autocomplete="off">
+                    <div class="mobile-search-placeholder" id="mobileSearchPlaceholder">
+                        Search wines by <span class="placeholder-name">Name</span>, <span class="placeholder-producer">Producer</span>, <span class="placeholder-varietal">Varietal</span>, or region...
+                    </div>
+                    <!-- Mobile Autocomplete Dropdown -->
+                    <div class="search-autocomplete-dropdown mobile-autocomplete" id="mobileSearchAutocompleteDropdown" style="display: none;">
+                        <div class="autocomplete-suggestions" id="mobileAutocompleteSuggestions"></div>
+                    </div>
+                </div>
+                <!-- Quick Search Buttons -->
+                <div class="mobile-quick-search-buttons">
+                    <button class="mobile-quick-search-btn" id="mobileDynamicModeBtn">
+                        <span>Dynamic Mode</span>
+                    </button>
+                    <button class="mobile-quick-search-btn" id="mobileQuickSearchOrganic" data-filter="organic">
+                        <span>Organic</span>
+                    </button>
+                    <button class="mobile-quick-search-btn" id="mobileQuickSearchFancy" data-filter="fancy">
+                        <span>Feeling Fancy</span>
+                    </button>
+                    <button class="mobile-quick-search-btn" id="mobileQuickSearchVarietals" data-filter="varietals">
+                        <span>Varietals</span>
+                    </button>
+                    <button class="mobile-quick-search-btn compare-wines-btn" id="mobileCompareWinesBtn" onclick="window.location.href='wine-comparison.html'" style="display: none;">
+                        <i class="fas fa-balance-scale"></i>
+                        <span>Compare Wines</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Wine Type Regions Popup -->
+        <div class="mobile-wine-type-popup" id="mobileWineTypePopup" style="display: none;">
+            <div class="mobile-wine-type-popup-overlay"></div>
+            <div class="mobile-wine-type-popup-header">
+                <h3 class="mobile-wine-type-popup-title" id="mobileWineTypePopupTitle">Select Filter</h3>
+                <button class="mobile-wine-type-popup-close" id="mobileWineTypePopupClose" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-wine-type-popup-tabs">
+                <button class="mobile-wine-type-popup-tab active" data-tab="regions" id="mobileWineTypePopupTabRegions">
+                    <span>Regions</span>
+                </button>
+                <button class="mobile-wine-type-popup-tab" data-tab="varietals" id="mobileWineTypePopupTabVarietals">
+                    <span>Varietals</span>
+                </button>
+            </div>
+            <div class="mobile-wine-type-popup-content">
+                <div class="mobile-wine-type-popup-section active" id="mobileWineTypePopupRegions">
+                    <!-- Regions will be populated dynamically -->
+                </div>
+                <div class="mobile-wine-type-popup-section" id="mobileWineTypePopupVarietals">
+                    <!-- Varietals will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Mobile Map and Wines Container (visible on mobile only) -->
+            <div class="mobile-map-wines-container" id="mobileMapWinesContainer">
+                <!-- Mobile Map View -->
+                <div class="mobile-map-view" id="mobileMapView">
+                    <div class="mobile-map-wrapper" id="mobileMapWrapper">
+                        <div id="mobileMap"></div>
+                        <div class="mobile-region-info" id="mobileRegionInfo" style="display: none;">
+                            <button class="mobile-region-info-close" id="mobileRegionInfoClose" aria-label="Close region info">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <h3 id="mobileRegionName">Region Name</h3>
+                            <p><strong>Capital:</strong> <span id="mobileRegionCapital">-</span></p>
+                            <p><strong>Population:</strong> <span id="mobileRegionPopulation">-</span></p>
+                            <p><strong>Area:</strong> <span id="mobileRegionArea">-</span></p>
+                            <p id="mobileRegionFact" class="mobile-region-fact">-</p>
+                            <p id="mobileRegionWineFacts" class="mobile-region-wine-facts">-</p>
+                        </div>
+                        
+                    </div>
+                    <!-- Mobile Wine Type Selector (positioned below map) -->
+                    <div class="mobile-wine-type-selector" id="mobileWineTypeSelector" style="display: none;">
+                        <div class="mobile-wine-types-scroll" id="mobileWineTypesScroll">
+                            <!-- Wine type chips will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Wines Cards Container (shown when region is clicked) -->
+                <div class="mobile-wines-cards-container" id="mobileWinesCardsContainer" style="display: none;">
+                    <div class="mobile-wines-cards-header">
+                        <div class="mobile-wines-cards-header-top">
+                            <button class="mobile-back-to-map-btn" id="mobileBackToMapBtn">
+                                <i class="fas fa-arrow-left"></i>
+                                <span>Back to Map</span>
+                            </button>
+                            <h2 class="mobile-wines-cards-title" id="mobileWinesCardsTitle">Wines</h2>
+                        </div>
+                        <div class="mobile-wines-cards-type-filters" id="mobileWinesCardsTypeFilters">
+                            <!-- Wine type filter buttons will be populated dynamically -->
+                        </div>
+                    </div>
+                    <div class="mobile-wines-cards-grid" id="mobileWinesCardsGrid">
+                        <!-- Wine cards will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Views Container (hidden on mobile - map is shown instead) -->
+            <div class="mobile-views-container" id="mobileViewsContainer" style="display: none;">
+                <!-- Mobile Regions View -->
+                <div class="mobile-view mobile-view-active" id="mobileRegionsView">
+                    <div class="mobile-view-header">
+                        <button class="mobile-back-btn" id="mobileBackToCategories" style="display: none;">
+                            <i class="fas fa-chevron-left"></i>
+                            <span>Categories</span>
+                        </button>
+                        <h2 class="mobile-view-title" id="mobileRegionsTitle">Select Wine Category</h2>
+                    </div>
+                    <div class="mobile-regions-list" id="mobileRegionsList">
+                        <!-- Regions will be populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Mobile Wines View -->
+                <div class="mobile-view" id="mobileWinesView">
+                    <div class="mobile-region-background" id="mobileRegionBackground"></div>
+                    <div class="mobile-view-content">
+                        <div class="mobile-view-header">
+                            <button class="mobile-back-btn" id="mobileBackToRegions">
+                                <i class="fas fa-chevron-left"></i>
+                                <span>Regions</span>
+                            </button>
+                            <h2 class="mobile-view-title" id="mobileWinesTitle"></h2>
+                        </div>
+                        <div class="mobile-wines-list" id="mobileWinesList">
+                            <!-- Wines will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar (desktop only) -->
+            <aside class="sidebar">
+                <div class="sidebar-title">Wine Categories</div>
+                <div class="wine-categories">
+                    <div class="wine-card-sidebar" data-type="ROSSO">
+                        <div class="wine-icon-sidebar">
+                            <picture>
+                                <source srcset="./image/glassRed.webp" type="image/webp">
+                                <img src="./image/glassRed.png" alt="Red wine icon" loading="lazy" decoding="async">
+                            </picture>
+                        </div>
+                        <div class="wine-card-title">Red Wines</div>
+                        <div class="wine-card-subtitle">Bold & Complex</div>
+                        <div class="wine-card-count">Loading...</div>
+                    </div>
+
+                    <div class="wine-card-sidebar" data-type="BIANCO">
+                        <div class="wine-icon-sidebar">
+                            <picture>
+                                <source srcset="./image/glassWhite.webp" type="image/webp">
+                                <img src="./image/glassWhite.png" alt="White wine icon" loading="lazy" decoding="async">
+                            </picture>
+                        </div>
+                        <div class="wine-card-title">White Wines</div>
+                        <div class="wine-card-subtitle">Crisp & Refreshing</div>
+                        <div class="wine-card-count">Loading...</div>
+                    </div>
+
+                    <div class="wine-card-sidebar" data-type="ROSATO">
+                        <div class="wine-icon-sidebar">
+                            <picture>
+                                <source srcset="./image/glRose.webp" type="image/webp">
+                                <img src="./image/glRose.png" alt="Rosé wine icon" loading="lazy" decoding="async">
+                            </picture>
+                        </div>
+                        <div class="wine-card-title">Rosé Wines</div>
+                        <div class="wine-card-subtitle">Elegant & Delicate</div>
+                        <div class="wine-card-count">Loading...</div>
+                    </div>
+
+                    <div class="wine-card-sidebar" data-type="ARANCIONE">
+                        <div class="wine-icon-sidebar">
+                            <picture>
+                                <source srcset="./image/glArancione.webp" type="image/webp">
+                                <img src="./image/glArancione.png" alt="Orange wine icon" loading="lazy" decoding="async">
+                            </picture>
+                        </div>
+                        <div class="wine-card-title">Orange Wines</div>
+                        <div class="wine-card-subtitle">Skin-Contact Whites</div>
+                        <div class="wine-card-count">Loading...</div>
+                    </div>
+
+                    <div class="wine-card-sidebar" data-type="BOLLICINE">
+                        <div class="wine-icon-sidebar">
+                            <picture>
+                                <source srcset="./image/glSparkling.webp" type="image/webp">
+                                <img src="./image/glSparkling.png" alt="Sparkling wine icon" loading="lazy" decoding="async">
+                            </picture>
+                        </div>
+                        <div class="wine-card-title">Sparkling</div>
+                        <div class="wine-card-subtitle">Celebratory & Vibrant</div>
+                        <div class="wine-card-count">Loading...</div>
+                        <button class="wine-card-info-btn" onclick="window.location.href='./SparklingWineDoc.html'" title="Sparkling Wine Guide">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+
+                    <div class="wine-card-sidebar" data-type="NON ALCOLICO">
+                        <div class="wine-icon-sidebar">
+                            <picture>
+                                <source srcset="./image/gl00.webp" type="image/webp">
+                                <img src="./image/gl00.png" alt="Non-alcoholic wine icon" loading="lazy" decoding="async">
+                            </picture>
+                        </div>
+                        <div class="wine-card-title">Non-Alcoholic</div>
+                        <div class="wine-card-subtitle">Zero Alcohol Selection</div>
+                        <div class="wine-card-count">Loading...</div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Regions Panel -->
+            <aside class="regions-panel" id="regionsPanel">
+                <div class="regions-panel-header">
+                    <div class="regions-panel-title" id="regionsPanelTitle">Regions</div>
+                    <div class="regions-panel-subtitle" id="regionsPanelSubtitle">Select a region</div>
+                </div>
+                <div class="regions-list" id="regionsList">
+                    <!-- Regions will be loaded here dynamically -->
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0;" class="main-content-desktop">
+                <!-- Search Bar -->
+                <div class="search-bar-container">
+                    <div class="search-wrapper">
+                        <div class="search-input-wrapper">
+                            <input type="text" id="desktopSearchInput" name="search" class="search-input luxury-search-input" placeholder="Search wines by name, producer, varietal, or region..." autocomplete="off">
+                            <span class="active-filters-badge" id="activeFiltersBadge" style="display: none;"></span>
+                            <!-- Autocomplete Dropdown -->
+                            <div class="search-autocomplete-dropdown" id="searchAutocompleteDropdown" style="display: none;">
+                                <div class="autocomplete-suggestions" id="autocompleteSuggestions"></div>
+                            </div>
+                        </div>
+                        <button class="btn-filter luxury-filter-btn">Filter by Region</button>
+                        <button class="btn-filter luxury-filter-btn">Filter by Varietal</button>
+                    </div>
+                </div>
+                    
+                <!-- Map Container -->
+                <div class="map-wrapper" id="mapWrapper">
+                    <!-- Floating search bar with small buttons (mobile/tablet only) -->
+                    <div id="floating-controls">
+                        <input type="text" id="floating-search-input" placeholder="Search wines...">
+                        <div id="small-buttons">
+                            <button class="small-button" onclick="handleFilter()">Filter</button>
+                            <button class="small-button" onclick="handleSort()">Sort</button>
+                            <button class="small-button" onclick="handleReset()">Reset</button>
+                        </div>
+                    </div>
+                    
+                    <div id="map"></div>
+                    
+                    <!-- Bottom region buttons (mobile/tablet only) -->
+                    <div id="region-buttons">
+                        <button class="region-button" onclick="goToRegion('Lazio')">Lazio</button>
+                        <button class="region-button" onclick="goToRegion('Toscana')">Toscana</button>
+                        <button class="region-button" onclick="goToRegion('Umbria')">Umbria</button>
+                        <button class="region-button" onclick="goToRegion('Marche')">Marche</button>
+                        <button class="region-button" onclick="goToRegion('Abruzzo')">Abruzzo</button>
+                        <button class="region-button" onclick="goToRegion('Molise')">Molise</button>
+                        <button class="region-button" onclick="goToRegion('Lombardia')">Lombardia</button>
+                        <button class="region-button" onclick="goToRegion('Veneto')">Veneto</button>
+                        <button class="region-button" onclick="goToRegion('Piemonte')">Piemonte</button>
+                    </div>
+                    <div class="region-info" id="regionInfo">
+                        <button class="region-info-close" id="regionInfoClose" aria-label="Close region info">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <h3 id="regionName">Region Name</h3>
+                        <p><strong>Capital:</strong> <span id="regionCapital">-</span></p>
+                        <p><strong>Population:</strong> <span id="regionPopulation">-</span></p>
+                        <p><strong>Area:</strong> <span id="regionArea">-</span></p>
+                        <p id="regionFact" class="region-fact">-</p>
+                        <p id="regionWineFacts" class="region-wine-facts">-</p>
+                    </div>
+                    
+                    <!-- Region name tooltip on hover -->
+                    <div class="region-tooltip" id="regionTooltip"></div>
+                    
+                    <!-- Sparkling Wine Guide Icon -->
+                    <a href="./SparklingWineDoc.html" class="sparkling-guide-icon" id="sparklingGuideIcon" style="display: none;" title="Sparkling Wine Guide">
+                        <i class="fas fa-book-open"></i>
+                        <span class="sparkling-guide-text">Sparkling Guide</span>
+                    </a>
+                </div>
+                
+                <!-- Wines List Container (replaces map when region is clicked) -->
+                <div class="wines-list-container" id="winesListContainer" style="display: none;">
+                    <div class="wines-list-header">
+                        <button class="btn-back-to-map" id="backToMapBtn">
+                            <i class="fas fa-arrow-left"></i> Back to Map
+                        </button>
+                        <div class="wines-list-title-section">
+                            <h2 class="wines-list-title" id="winesListTitle">Wines</h2>
+                            <p class="wines-list-subtitle" id="winesListSubtitle">Select a wine to view details</p>
+                        </div>
+                        <div class="wines-list-filters" id="winesListFilters" style="display: none;">
+                            <button class="wine-type-filter-btn active" data-wine-type="all">All</button>
+                            <button class="wine-type-filter-btn" data-wine-type="ROSSO">Red</button>
+                            <button class="wine-type-filter-btn" data-wine-type="BIANCO">White</button>
+                            <button class="wine-type-filter-btn" data-wine-type="ROSATO">Rosé</button>
+                            <button class="wine-type-filter-btn" data-wine-type="BOLLICINE">Sparkling</button>
+                            <button class="wine-type-filter-btn" data-wine-type="ARANCIONE">Orange</button>
+                        </div>
+                    </div>
+                    <div class="wines-grid-container" id="winesGridContainer">
+                        <!-- Wines will be loaded here dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wines Panel -->
+            <aside class="wines-panel" id="winesPanel">
+                <div class="wines-panel-header">
+                    <div class="wines-panel-title" id="winesPanelTitle">Wines</div>
+                    <div class="wines-panel-subtitle" id="winesPanelSubtitle">Select a wine</div>
+                </div>
+                <div class="wines-list" id="winesList">
+                    <!-- Wines will be loaded here dynamically -->
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Leaflet JS (HTTPS CDN) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Bootstrap 5.3 JS Bundle (HTTPS CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <!-- Custom JS -->
+    <script src="./js/wineries.js"></script>
+    <script src="./js/subcategory-helper.js"></script>
+    <script src="./js/main.js"></script>
+    <script>
+        // Function to check if device is tablet
+        function isTablet() {
+            return /Mobi/i.test(navigator.userAgent) && window.innerWidth > 768 && window.innerWidth < 1024;
+        }
+
+        // Function to handle region button clicks
+        function goToRegion(region) {
+            // Region coordinates for Italy
+            var regions = {
+                'Lazio': [41.9028, 12.4964, 8],
+                'Toscana': [43.769, 11.2558, 8],
+                'Umbria': [43.1118, 12.3922, 9],
+                'Marche': [43.6158, 13.5022, 9],
+                'Abruzzo': [42.3629, 13.4054, 9],
+                'Molise': [41.6059, 14.3561, 9],
+                'Lombardia': [45.4642, 9.1900, 8],
+                'Veneto': [45.4372, 11.8666, 8],
+                'Piemonte': [45.0703, 7.6869, 8]
+            };
+
+            var coords = regions[region];
+            if (coords && window.mapInstance) {
+                window.mapInstance.flyTo([coords[0], coords[1]], coords[2], {
+                    animate: true,
+                    duration: 1.0
+                });
+            } else if (coords && window.mobileMapInstance) {
+                window.mobileMapInstance.flyTo([coords[0], coords[1]], coords[2], {
+                    animate: true,
+                    duration: 1.0
+                });
+            }
+        }
+
+        // Handle filter button
+        function handleFilter() {
+            // Trigger existing filter functionality
+            const filterBtn = document.querySelector('.btn-filter');
+            if (filterBtn) {
+                filterBtn.click();
+            }
+        }
+
+        // Handle sort button
+        function handleSort() {
+            // Add sort functionality if needed
+            console.log('Sort clicked');
+        }
+
+        // Handle reset button
+        function handleReset() {
+            // Reset map view
+            if (window.mapInstance) {
+                window.mapInstance.setView([42.0, 12.5], 6);
+            }
+            if (window.mobileMapInstance) {
+                window.mobileMapInstance.setView([42.0, 12.5], 6);
+            }
+            
+            // Clear search
+            const searchInput = document.getElementById('floating-search-input');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            
+            const desktopSearch = document.getElementById('desktopSearchInput');
+            if (desktopSearch) {
+                desktopSearch.value = '';
+            }
+        }
+
+        // Sync floating search with desktop search
+        document.addEventListener('DOMContentLoaded', function() {
+            // #region agent log
+            // Disabled logging to avoid console errors when server is not available
+            const logData = (hypothesisId, message, data) => {
+                // Logging disabled - no-op function to prevent errors
+                // Uncomment below to enable logging when server is available:
+                /*
+                const logEndpoint = 'http://127.0.0.1:7247/ingest/fe36653c-3e53-480d-b7e2-efd99bb3957a';
+                fetch(logEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        location: 'wine-map.html:DOMContentLoaded',
+                        message: message,
+                        data: data,
+                        timestamp: Date.now(),
+                        sessionId: 'debug-session',
+                        runId: 'run1',
+                        hypothesisId: hypothesisId
+                    })
+                }).catch(() => {});
+                */
+            };
+            
+            // Check if CSS was loaded from cache or network
+            const styleLink = document.querySelector('link[href*="style.css"]');
+            if (styleLink) {
+                // Try to detect if loaded from cache by checking response headers
+                fetch(styleLink.href, { method: 'HEAD', cache: 'no-cache' })
+                    .then(response => {
+                        logData('A', 'CSS file fetch response headers', {
+                            url: styleLink.href,
+                            status: response.status,
+                            statusText: response.statusText,
+                            cacheControl: response.headers.get('cache-control'),
+                            etag: response.headers.get('etag'),
+                            lastModified: response.headers.get('last-modified'),
+                            date: response.headers.get('date'),
+                            fromServiceWorker: response.headers.get('sw-cache') || 'unknown'
+                        });
+                    })
+                    .catch(err => {
+                        logData('A', 'CSS file fetch error', { url: styleLink.href, error: err.message });
+                    });
+            }
+            
+            // Check service worker cache status
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    if (reg) {
+                        logData('A', 'service worker registration status', {
+                            active: !!reg.active,
+                            installing: !!reg.installing,
+                            waiting: !!reg.waiting,
+                            scope: reg.scope,
+                            updateViaCache: reg.updateViaCache
+                        });
+                        
+                        // Check cache version
+                        if (reg.active) {
+                            reg.active.postMessage({ type: 'GET_VERSION' });
+                        }
+                    } else {
+                        logData('A', 'no service worker registration found', {});
+                    }
+                });
+            }
+            // #endregion
+            
+            const floatingSearch = document.getElementById('floating-search-input');
+            const desktopSearch = document.getElementById('desktopSearchInput');
+            
+            if (floatingSearch && desktopSearch) {
+                floatingSearch.addEventListener('input', function(e) {
+                    desktopSearch.value = e.target.value;
+                    // Trigger search event
+                    const event = new Event('input', { bubbles: true });
+                    desktopSearch.dispatchEvent(event);
+                });
+            }
+
+            // Debug: Check map positioning and padding-top
+                setTimeout(function() {
+                const mapWrapper = document.querySelector('.map-wrapper');
+                const map = document.getElementById('map');
+                const searchBar = document.querySelector('.search-bar-container');
+                const mainContent = document.querySelector('.main-content-desktop');
+                const contentWrapper = document.querySelector('.content-wrapper');
+                
+                if (mapWrapper) {
+                    const rect = mapWrapper.getBoundingClientRect();
+                    const styles = window.getComputedStyle(mapWrapper);
+                    // #region agent log
+                    logData('A', 'map-wrapper dimensions and CSS conflicts', {
+                        height: rect.height,
+                        width: rect.width,
+                        top: rect.top,
+                        paddingTop: styles.paddingTop,
+                        marginTop: styles.marginTop,
+                        position: styles.position,
+                        flex: styles.flex,
+                        heightStyle: styles.height,
+                        widthStyle: styles.width,
+                        minHeight: styles.minHeight,
+                        maxHeight: styles.maxHeight,
+                        display: styles.display
+                    });
+                    // #endregion
+                }
+                
+                if (map) {
+                    const rect = map.getBoundingClientRect();
+                    const styles = window.getComputedStyle(map);
+                    // Get all CSS rules that apply to #map
+                    const allRules = [];
+                    for (let sheet of document.styleSheets) {
+                        try {
+                            for (let rule of sheet.cssRules || sheet.rules || []) {
+                                if (rule.selectorText && (rule.selectorText.includes('#map') || rule.selectorText.includes('.map-wrapper'))) {
+                                    allRules.push({
+                                        selector: rule.selectorText,
+                                        media: rule.parentRule ? rule.parentRule.media.mediaText : 'none',
+                                        cssText: rule.cssText
+                                    });
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                    // #region agent log
+                    logData('B', 'map dimensions and CSS conflicts', {
+                        height: rect.height,
+                        width: rect.width,
+                        top: rect.top,
+                        bottom: rect.bottom,
+                        paddingTop: styles.paddingTop,
+                        marginTop: styles.marginTop,
+                        position: styles.position,
+                        topStyle: styles.top,
+                        bottomStyle: styles.bottom,
+                        heightStyle: styles.height,
+                        widthStyle: styles.width,
+                        minHeight: styles.minHeight,
+                        maxHeight: styles.maxHeight,
+                        flex: styles.flex,
+                        display: styles.display,
+                        allRules: allRules.slice(0, 10) // Limit to first 10 rules
+                    });
+                    // #endregion
+                }
+                
+                if (searchBar) {
+                    const rect = searchBar.getBoundingClientRect();
+                    const styles = window.getComputedStyle(searchBar);
+                    // #region agent log
+                    logData('C', 'search-bar dimensions', {
+                        height: rect.height,
+                        top: rect.top,
+                        bottom: rect.bottom,
+                        paddingTop: styles.paddingTop,
+                        marginTop: styles.marginTop
+                    });
+                    // #endregion
+                }
+                
+                if (mainContent) {
+                    const rect = mainContent.getBoundingClientRect();
+                    const styles = window.getComputedStyle(mainContent);
+                    // #region agent log
+                    logData('D', 'main-content dimensions', {
+                        height: rect.height,
+                        top: rect.top,
+                        paddingTop: styles.paddingTop,
+                        marginTop: styles.marginTop,
+                        display: styles.display,
+                        flexDirection: styles.flexDirection,
+                        flex: styles.flex
+                    });
+                    // #endregion
+                }
+                
+                if (contentWrapper) {
+                    const rect = contentWrapper.getBoundingClientRect();
+                    const styles = window.getComputedStyle(contentWrapper);
+                    // #region agent log
+                    logData('F', 'content-wrapper dimensions', {
+                        height: rect.height,
+                        top: rect.top,
+                        paddingTop: styles.paddingTop,
+                        marginTop: styles.marginTop,
+                        display: styles.display
+                    });
+                    // #endregion
+                }
+                
+                // Calculate available space
+                if (mainContent && searchBar && mapWrapper) {
+                    const mainRect = mainContent.getBoundingClientRect();
+                    const searchRect = searchBar.getBoundingClientRect();
+                    const availableHeight = mainRect.height - searchRect.height;
+                    // #region agent log
+                    logData('E', 'available space calculation', {
+                        mainContentHeight: mainRect.height,
+                        searchBarHeight: searchRect.height,
+                        availableHeight: availableHeight,
+                        mapWrapperHeight: mapWrapper.getBoundingClientRect().height,
+                        mapWrapperTop: mapWrapper.getBoundingClientRect().top,
+                        searchBarBottom: searchRect.bottom,
+                        gap: mapWrapper.getBoundingClientRect().top - searchRect.bottom
+                    });
+                    // #endregion
+                }
+            }, 1000);
+
+            // Zoom is set to 6 for all devices (removed tablet-specific zoom)
+        });
+    </script>
+</body>
+</html>

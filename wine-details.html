@@ -1,0 +1,2456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Wine Details - Gran Caffè L'Aquila</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --gold-light: #F4CF67;
+            --dark-gold: #B8860B;
+            --black: #0E0E0E;
+            --charcoal: #1A1A1A;
+            --ivory: #F5F5F0;
+            --cream: #F8F8F0;
+            --transition-slow: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-medium: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Subtle "halo" used for bottle depth (matches H1 tone) */
+            --wine-title-glow-1: rgba(244, 207, 103, 0.264);
+            --wine-title-glow-2: rgba(244, 207, 103, 0.144);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            font-family: 'Cormorant', serif;
+            background: var(--black);
+            color: var(--ivory);
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            touch-action: pan-y; /* Enable vertical scrolling, prevent horizontal */
+        }
+
+        .luxury-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            background: #000;
+            background-image: none !important;
+            background-size: auto;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .luxury-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: none;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Top Bar */
+        .wine-details-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: rgba(26, 26, 26, 0.95);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            gap: 1rem;
+        }
+        
+        .wine-details-logo {
+            width: 48px;
+            height: 48px;
+            background: transparent;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .wine-details-logo-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        
+        .wine-details-logo:hover {
+            transform: scale(1.05);
+        }
+        
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .wine-details-logo {
+                width: 56px !important;
+                height: 56px !important;
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .wine-details-top-bar {
+                padding: 10px 15px;
+            }
+            
+            .wine-details-top-title {
+                font-size: 14px;
+            }
+        }
+
+        .wine-details-back-btn {
+            color: var(--gold);
+            font-size: 18px;
+            cursor: pointer;
+            transition: color 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .wine-details-back-btn:hover {
+            color: var(--gold-light);
+        }
+
+        .wine-details-top-title {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--gold);
+            flex: 1;
+            text-align: center;
+        }
+
+        .wine-details-share-btn {
+            background: none;
+            border: none;
+            color: var(--gold);
+            font-size: 18px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .wine-details-share-btn:hover {
+            color: var(--gold-light);
+        }
+
+        /* Main Content */
+        .wine-details-container {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0;
+            width: 100%;
+            background: #000;
+        }
+
+        .wine-details-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .wine-details-container::-webkit-scrollbar-track {
+            background: rgba(245, 245, 240, 0.05);
+        }
+
+        .wine-details-container::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.3);
+            border-radius: 3px;
+        }
+
+        .wine-details-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            gap: 0;
+            background: #000;
+            color: var(--ivory);
+        }
+
+        /* Wine Details Content: left = bottle image, right = wineMeta + tasting notes */
+        @media (min-width: 768px) {
+            .wine-details-content {
+                display: grid;
+                grid-template-columns: minmax(200px, 0.35fr) 1fr;
+                grid-template-rows: auto;
+                gap: 2rem 2.5rem;
+                align-items: start;
+            }
+            .wine-image-section {
+                grid-column: 1;
+                grid-row: 1 / -1;
+                position: sticky;
+                top: 5rem;
+            }
+            .wine-info-section {
+                grid-column: 2;
+                grid-row: 1;
+            }
+            .tasting-notes-row {
+                grid-column: 2;
+                grid-row: 2;
+                width: 100%;
+                margin-top: 0;
+            }
+            .wine-info-section .wine-meta {
+                max-width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+            }
+        }
+
+        .wine-image-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            align-items: center;
+            height: 100%;
+            position: relative;
+        }
+
+        .wine-image {
+            width: 100%;
+            height: 320px;
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            position: relative;
+            overflow: hidden;
+            margin: 1.5rem 0;
+        }
+        @media (min-width: 768px) {
+            .wine-image {
+                height: 450px;
+            }
+        }
+
+        /* Soft golden halo behind bottle (static) */
+        #wineImageContainer {
+            isolation: isolate; /* keep ::before behind children without z-index side effects */
+        }
+        #wineImageContainer::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 52%;
+            transform: translate(-50%, -50%);
+            width: min(380px, 92%);
+            aspect-ratio: 1 / 1;
+            border-radius: 999px;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(
+                circle at center,
+                rgba(244, 207, 103, 0.42) 0%,
+                rgba(212, 175, 55, 0.20) 34%,
+                rgba(212, 175, 55, 0.10) 52%,
+                rgba(212, 175, 55, 0.00) 70%
+            );
+            filter: blur(10px);
+            opacity: 0.95;
+        }
+
+        .wine-bottle {
+            font-size: 120px;
+            color: rgba(212, 175, 55, 0.4);
+        }
+
+        #wineBottleImage {
+            position: relative;
+            z-index: 1;
+            max-width: 70%;
+            max-height: 300px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            filter:
+                drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55))
+                drop-shadow(0 0 19px var(--wine-title-glow-1))
+                drop-shadow(0 0 48px var(--wine-title-glow-2));
+            will-change: filter;
+            transition: filter 240ms ease;
+        }
+        @media (min-width: 768px) {
+            #wineBottleImage {
+                max-height: 420px;
+            }
+        }
+        
+        #wineBottleIcon {
+            position: relative;
+            z-index: 1;
+            display: block;
+        }
+        
+        #wineBottleImage[style*="display: block"] ~ #wineBottleIcon,
+        #wineBottleImage:not([style*="display: none"]) ~ #wineBottleIcon {
+            display: none !important;
+        }
+
+        .wine-information {
+            width: 100%;
+        }
+
+        /* Popup per Information e Producer */
+        .info-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .info-popup-overlay.active {
+            display: flex;
+        }
+
+        .info-popup-content {
+            background: linear-gradient(135deg, var(--charcoal) 0%, var(--black) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 12px;
+            padding: 0;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+                position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .info-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+                padding: 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            position: sticky;
+            top: 0;
+            background: linear-gradient(135deg, var(--charcoal) 0%, var(--black) 100%);
+            z-index: 10;
+        }
+
+        .info-popup-title {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .info-popup-close {
+            background: none;
+            border: none;
+            color: var(--gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+            transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .info-popup-close:hover {
+            background: rgba(212, 175, 55, 0.1);
+            transform: rotate(90deg);
+        }
+
+        .info-popup-body {
+            padding: 1.5rem;
+        }
+
+        .info-popup-trigger {
+            cursor: pointer;
+            color: var(--gold);
+            text-decoration: underline;
+            text-decoration-color: rgba(212, 175, 55, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .info-popup-trigger:hover {
+            text-decoration-color: var(--gold);
+        }
+
+        /* Tasting Notes Popup */
+        .tasting-notes-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .tasting-notes-popup-overlay.active {
+            display: flex;
+        }
+
+        .tasting-notes-popup-overlay[aria-hidden="true"] {
+            display: none;
+        }
+
+        .tasting-notes-popup-overlay[aria-hidden="false"] {
+            display: flex;
+        }
+
+        .tasting-notes-popup-content {
+            background: linear-gradient(135deg, var(--charcoal) 0%, var(--black) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 0;
+            width: 90%;
+            max-width: 480px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .tasting-notes-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            background: linear-gradient(135deg, var(--charcoal) 0%, var(--black) 100%);
+        }
+
+        .tasting-notes-popup-title {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .tasting-notes-popup-close {
+            background: none;
+            border: none;
+            color: var(--gold);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+            transition: all 0.2s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .tasting-notes-popup-close:hover {
+            background: rgba(212, 175, 55, 0.15);
+        }
+
+        .tasting-notes-popup-body {
+            padding: 1.5rem;
+        }
+
+        .tasting-notes-popup-body .tasting-notes-panel-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border: none;
+        }
+
+        .tasting-notes-popup-body .tasting-category {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--gold);
+            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .info-item {
+            background: rgba(245, 245, 240, 0.05);
+            padding: 1rem 1.25rem;
+            border-left: 3px solid var(--gold);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .info-item:hover {
+            background: rgba(245, 245, 240, 0.08);
+            transform: translateX(4px);
+        }
+
+        .info-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .info-icon {
+            color: var(--gold);
+            font-size: 14px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--gold);
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            font-family: 'Cinzel', serif;
+        }
+
+        .info-value {
+            color: var(--ivory);
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        /* Wine Info Section */
+        .wine-info-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: fit-content;
+        }
+
+        .wine-name-block {
+            width: 100%;
+            text-align: center;
+        }
+
+        .wine-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--gold-light);
+            letter-spacing: 1px;
+            line-height: 1.3;
+            margin-bottom: 0;
+            text-align: center;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .wine-name {
+                font-size: 2.2rem;
+            }
+        }
+
+        .wine-quick-info {
+            margin-top: 0.75rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            color: var(--ivory);
+            line-height: 1.4;
+        }
+
+        .wine-quick-info .quick-info-tagline {
+            display: block;
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        .wine-description {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--ivory);
+            background: rgba(245, 245, 240, 0.05);
+            padding: 1rem;
+            border-left: 3px solid var(--gold);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .wine-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            font-size: 1rem;
+            padding: 1.5rem;
+            background-color: rgba(0, 0, 0, 0.46);
+            border: none;
+            border-radius: 12px;
+            margin: 1.5rem auto;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            min-height: 2.5rem;
+        }
+
+        .meta-item:last-child {
+            border-bottom: none;
+            padding-top: 0.75rem;
+            margin-top: 0.5rem;
+            border-top: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .meta-item:last-child .meta-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .meta-label {
+            color: var(--gold);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+            min-width: 80px;
+        }
+
+        .meta-value {
+            color: var(--ivory);
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: right;
+            flex-grow: 1;
+            margin-left: 1rem;
+        }
+
+        /* Tasting Notes */
+        .tasting-notes {
+            margin-top: 1rem;
+        }
+
+        .tasting-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .tasting-note {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--ivory);
+            transition: all 0.3s;
+        }
+
+        .tasting-note:hover {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: var(--gold);
+        }
+
+        /* Tasting Category (for WineApp compatibility) */
+        .tasting-category {
+            background: transparent;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: left;
+            font-size: 1rem;
+            color: var(--ivory);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .tasting-category:hover {
+            background: transparent;
+            border-color: var(--gold);
+        }
+
+        .tasting-label {
+            font-weight: 600;
+            color: var(--gold);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Tasting Notes: button + popup */
+
+        .tasting-notes-header {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            font-family: 'Cinzel', serif;
+            font-size: max(1.125rem, 16px); /* prevent iOS Safari zoom on tap */
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: var(--gold);
+            background: rgba(26, 26, 26, 0.6);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s, color 0.2s;
+        }
+        .tasting-notes-header:hover {
+            background: rgba(212, 175, 55, 0.08);
+            color: var(--gold-light);
+        }
+        .tasting-notes-header:focus {
+            outline: 2px solid var(--gold);
+            outline-offset: 2px;
+        }
+        .tasting-notes-header-icon {
+            display: inline-block;
+            width: 0.5rem;
+            height: 0.5rem;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: rotate(45deg);
+            margin-left: 0.5rem;
+            transition: transform 0.25s ease;
+        }
+
+        .tasting-notes-panel {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .tasting-notes-panel[hidden] {
+            max-height: 0 !important;
+            display: block;
+            visibility: hidden;
+        }
+        .tasting-notes-panel:not([hidden]) {
+            max-height: 1200px;
+            visibility: visible;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .tasting-notes-panel,
+            .tasting-notes-header-icon { transition: none; }
+        }
+        .tasting-notes-panel-inner {
+            padding: 1rem 1.25rem 1.25rem;
+            border-top: 1px solid rgba(212, 175, 55, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        @media (min-width: 768px) {
+            .tasting-notes-panel-inner {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 1rem 1.25rem;
+            }
+            .tasting-notes-panel-inner .tasting-category {
+                flex: 1 1 200px;
+                min-width: 180px;
+            }
+        }
+
+        /* Readability: industry standards (min 16px body, 1.5 line-height, sufficient contrast) */
+        .tasting-label {
+            font-size: 1rem;
+            line-height: 1.5;
+            letter-spacing: 0.05em;
+        }
+        .tasting-value {
+            color: var(--ivory);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .elegant-message {
+            text-align: left;
+            padding: 1rem;
+        }
+
+        .elegant-message .tasting-label {
+            margin-bottom: 0.5rem;
+        }
+
+        .elegant-message .tasting-value {
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Food Pairings */
+        .food-pairings {
+            margin-top: 1rem;
+        }
+
+        .pairing-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .pairing-item {
+            background: rgba(245, 245, 240, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            padding: 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--ivory);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pairing-icon {
+            font-size: 18px;
+            color: var(--gold);
+            margin-bottom: 5px;
+        }
+
+        .pairing-name {
+            font-size: 0.9rem;
+            color: var(--ivory);
+            margin: 0;
+            font-weight: 500;
+        }
+
+        /* Producer Info */
+        .producer-info {
+            margin-top: 1rem;
+        }
+
+        .producer-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            color: var(--gold-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .producer-description {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--gold);
+        }
+
+        /* Share Section */
+        .share-wine-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        .share-wine-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
+            border: none;
+            color: var(--black);
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .share-wine-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(212, 175, 55, 0.2);
+        }
+
+        /* Modal */
+        .share-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .share-modal.active {
+            display: flex;
+        }
+
+        .share-modal-content {
+            background: var(--charcoal);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .share-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .share-modal-header h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 14px;
+        }
+
+        .close-share-modal {
+            background: none;
+            border: none;
+            color: var(--gold);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .share-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .share-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--ivory);
+            font-size: 10px;
+        }
+
+        .share-option:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--gold);
+        }
+
+        .share-option i {
+            font-size: 20px;
+            color: var(--gold);
+        }
+
+        .share-url-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        .share-url-section label {
+            display: block;
+            font-size: 10px;
+            color: var(--gold);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .url-copy-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        #shareUrl {
+            flex: 1;
+            padding: 8px;
+            background: rgba(245, 245, 240, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            color: var(--ivory);
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .copy-url-btn {
+            padding: 8px 12px;
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--gold);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .copy-url-btn:hover {
+            background: rgba(212, 175, 55, 0.3);
+        }
+
+        /* Footer – robusto, responsive, armonizzato con luxury container */
+        .luxury-footer {
+            display: block !important;
+            background: rgba(26, 26, 26, 0.65);
+            border-top: 1px solid rgba(212, 175, 55, 0.18);
+            padding: 1.75rem 1.5rem;
+            flex-shrink: 0;
+            font-family: 'Cormorant', serif;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-areas:
+                "logo"
+                "info"
+                "social"
+                "copyright";
+            gap: 1.25rem;
+            max-width: 640px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            grid-area: logo;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: 2.5px;
+            color: var(--gold);
+            text-transform: uppercase;
+            line-height: 1.3;
+        }
+
+        .footer-info {
+            grid-area: info;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem 1.25rem;
+        }
+
+        .footer-info p {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            font-size: 1rem;
+            color: rgba(245, 245, 240, 0.9);
+            font-weight: 400;
+            line-height: 1.4;
+        }
+
+        .footer-info i {
+            color: var(--gold);
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .social-icons {
+            grid-area: social;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .social-icons a {
+            color: var(--gold);
+            text-decoration: none;
+            transition: color 0.25s ease, opacity 0.25s ease;
+            opacity: 0.85;
+        }
+
+        .social-icons a:hover {
+            color: var(--gold-light);
+            opacity: 1;
+        }
+
+        .copyright {
+            grid-area: copyright;
+            display: block;
+            margin-top: 0.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(212, 175, 55, 0.15);
+            font-size: 0.85rem;
+            color: rgba(212, 175, 55, 0.6);
+            letter-spacing: 0.6px;
+            line-height: 1.4;
+        }
+
+        .copyright p {
+            margin: 0;
+        }
+
+        @media (min-width: 520px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                grid-template-areas:
+                    "logo logo"
+                    "info social"
+                    "copyright copyright";
+                gap: 1rem 1.5rem;
+            }
+            .footer-info {
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: flex-start;
+            }
+            .footer-info p { justify-content: flex-start; }
+            .social-icons { justify-content: flex-end; align-items: center; }
+        }
+
+        /* ==================== DAY MODE STYLES ==================== */
+        :root[data-theme="day"] html,
+        :root[data-theme="day"] body {
+            background: #FDFBF7 !important;
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .luxury-container {
+            background: #000 !important;
+            background-image: none !important;
+            background-size: auto !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+        }
+
+        :root[data-theme="day"] .wine-details-top-bar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-bottom: 1px solid rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .wine-details-back-btn,
+        :root[data-theme="day"] .wine-details-share-btn {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .wine-details-back-btn:hover,
+        :root[data-theme="day"] .wine-details-share-btn:hover {
+            color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .wine-details-top-title {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .wine-image {
+            background: rgba(245, 245, 240, 0.5) !important;
+            border: 2px solid rgba(139, 105, 20, 0.3) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        :root[data-theme="day"] .wine-bottle {
+            color: rgba(139, 105, 20, 0.3) !important;
+        }
+
+        :root[data-theme="day"] .wine-name {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] {
+            --wine-title-glow-1: rgba(139, 0, 0, 0.216);
+            --wine-title-glow-2: rgba(139, 0, 0, 0.12);
+        }
+
+        :root[data-theme="day"] .wine-quick-info {
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .wine-quick-info .quick-info-tagline {
+            color: #333 !important;
+        }
+
+        :root[data-theme="day"] .wine-description {
+            background: rgba(245, 245, 240, 0.5) !important;
+            color: #1a1a1a !important;
+            border-left: 3px solid #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .wine-meta {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        :root[data-theme="day"] .meta-item {
+            border-bottom-color: rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .meta-label {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .meta-value {
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .meta-item {
+            border-bottom: 1px solid rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .meta-label {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .meta-value {
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .section-title {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .info-item {
+            background: rgba(245, 245, 240, 0.5) !important;
+            border-left: 3px solid #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .info-item:hover {
+            background: rgba(212, 175, 55, 0.1) !important;
+        }
+
+        :root[data-theme="day"] .info-label {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .info-value {
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .info-icon {
+            color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .tasting-note {
+            background: rgba(212, 175, 55, 0.1) !important;
+            border: 1px solid rgba(139, 105, 20, 0.3) !important;
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .tasting-note:hover {
+            background: rgba(212, 175, 55, 0.15) !important;
+            border-color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .tasting-category {
+            background: transparent !important;
+            border: 1px solid rgba(139, 105, 20, 0.3) !important;
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .tasting-category:hover {
+            background: transparent !important;
+            border-color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .tasting-label {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .tasting-value {
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-header {
+            background: rgba(253, 251, 247, 0.9) !important;
+            border-color: rgba(139, 105, 20, 0.35) !important;
+            color: #8B0000 !important;
+        }
+        :root[data-theme="day"] .tasting-notes-header:hover {
+            background: rgba(197, 160, 89, 0.12) !important;
+            color: #5a0000 !important;
+        }
+        :root[data-theme="day"] .tasting-notes-header:focus {
+            outline-color: #8B0000 !important;
+        }
+        :root[data-theme="day"] .tasting-notes-panel-inner {
+            border-top-color: rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .pairing-item {
+            background: rgba(245, 245, 240, 0.5) !important;
+            border: 1px solid rgba(139, 105, 20, 0.2) !important;
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .pairing-icon {
+            color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .pairing-name {
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .producer-name {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .producer-description {
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .share-wine-section {
+            border-top: 1px solid rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .share-wine-btn {
+            background: linear-gradient(135deg, #C5A059 0%, #8B6914 100%) !important;
+            color: #fff !important;
+        }
+
+        :root[data-theme="day"] .share-wine-btn:hover {
+            box-shadow: 0 8px 16px rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .share-modal {
+            background: rgba(0, 0, 0, 0.5) !important;
+        }
+
+        :root[data-theme="day"] .share-modal-content {
+            background: #FDFBF7 !important;
+            border: 1px solid rgba(139, 105, 20, 0.3) !important;
+        }
+
+        :root[data-theme="day"] .share-modal-header h3 {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .close-share-modal {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .share-option {
+            background: rgba(212, 175, 55, 0.1) !important;
+            border: 1px solid rgba(139, 105, 20, 0.3) !important;
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .share-option:hover {
+            background: rgba(212, 175, 55, 0.2) !important;
+            border-color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .share-option i {
+            color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .share-url-section label {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] #shareUrl {
+            background: rgba(245, 245, 240, 0.5) !important;
+            border: 1px solid rgba(139, 105, 20, 0.3) !important;
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .copy-url-btn {
+            background: rgba(212, 175, 55, 0.2) !important;
+            border: 1px solid rgba(139, 105, 20, 0.3) !important;
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .copy-url-btn:hover {
+            background: rgba(212, 175, 55, 0.3) !important;
+        }
+
+        :root[data-theme="day"] .luxury-footer {
+            background: rgba(253, 251, 247, 0.85) !important;
+            border-top: 1px solid rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .footer-logo {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .footer-info p {
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .footer-info i {
+            color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .social-icons a {
+            color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .social-icons a:hover {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .copyright {
+            border-top-color: rgba(139, 105, 20, 0.2) !important;
+            color: rgba(26, 26, 26, 0.55) !important;
+        }
+
+        :root[data-theme="day"] .copyright {
+            color: rgba(139, 105, 20, 0.5) !important;
+        }
+
+        :root[data-theme="day"] .wine-details-container::-webkit-scrollbar-track {
+            background: rgba(245, 245, 240, 0.3) !important;
+        }
+
+        :root[data-theme="day"] .wine-details-container::-webkit-scrollbar-thumb {
+            background: rgba(139, 105, 20, 0.3) !important;
+        }
+
+        /* Day mode for popup */
+        :root[data-theme="day"] .info-popup-overlay {
+            background: rgba(0, 0, 0, 0.3) !important;
+        }
+
+        :root[data-theme="day"] .info-popup-content {
+            background: #FDFBF7 !important;
+            border: 1px solid rgba(139, 105, 20, 0.3) !important;
+        }
+
+        :root[data-theme="day"] .info-popup-header {
+            background: #FDFBF7 !important;
+            border-bottom: 1px solid rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .info-popup-title {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .info-popup-close {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .info-popup-close:hover {
+            background: rgba(197, 160, 89, 0.1) !important;
+        }
+
+        :root[data-theme="day"] .info-popup-trigger {
+            color: #8B0000 !important;
+            text-decoration-color: rgba(139, 105, 20, 0.5) !important;
+        }
+
+        :root[data-theme="day"] .info-popup-trigger:hover {
+            text-decoration-color: #C5A059 !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-overlay {
+            background: rgba(0, 0, 0, 0.3) !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-content {
+            background: #FDFBF7 !important;
+            border: 1px solid rgba(139, 105, 20, 0.3) !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-header {
+            background: #FDFBF7 !important;
+            border-bottom: 1px solid rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-title {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-close {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .tasting-notes-popup-close:hover {
+            background: rgba(197, 160, 89, 0.1) !important;
+        }
+
+        /* ==================== WINE LAB ==================== */
+        #wineLabSection {
+            --wine-lab-primary: #8B0000;
+            --wine-lab-dark: #3a1a1a;
+            --wine-lab-light-bg: var(--cream);
+            --wine-lab-rgb-primary: 139, 0, 0;
+            --wine-lab-rgb-gold: 212, 175, 55;
+            margin-top: var(--space-lg);
+            border-top: 1px solid var(--border-color);
+            padding-top: var(--space-lg);
+        }
+
+        .wine-lab-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+        }
+
+        .wine-lab-title {
+            font-family: var(--font-heading);
+            color: var(--gold);
+            font-size: var(--fs-600);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .wine-lab-toggle {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
+            border: none;
+            color: var(--black);
+            font-family: var(--font-heading);
+            font-size: var(--fs-200);
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all var(--transition-medium);
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .wine-lab-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(212, 175, 55, 0.4);
+            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+        }
+
+        .wine-lab-panel[hidden] {
+            display: none;
+        }
+
+        .wine-lab-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-bottom: var(--space-md);
+            padding: var(--space-sm);
+            background: rgba(26, 26, 26, 0.5);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .wine-lab-controls button {
+            padding: var(--space-xs) var(--space-sm);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-heading);
+            font-weight: 600;
+            font-size: var(--fs-200);
+            letter-spacing: 0.5px;
+            transition: all var(--transition-medium);
+            box-shadow: 0 2px 6px var(--shadow-color);
+        }
+
+        .wine-lab-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .wine-lab-hidden {
+            display: none !important;
+        }
+
+        .wine-lab-edit-btn {
+            background: var(--wine-lab-primary);
+            color: var(--ivory);
+            border: 1px solid var(--wine-lab-primary);
+        }
+
+        .wine-lab-edit-btn:hover {
+            background: #9B1010;
+            border-color: #9B1010;
+        }
+
+        .wine-lab-save-btn {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
+            color: var(--black);
+            border: 1px solid var(--gold);
+            display: none;
+        }
+
+        .wine-lab-save-btn:hover {
+            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+        }
+
+        .wine-lab-download-btn {
+            background: #2c5e19;
+            color: var(--ivory);
+            border: 1px solid #2c5e19;
+        }
+
+        .wine-lab-download-btn:hover {
+            background: #3d7a25;
+            border-color: #3d7a25;
+        }
+
+        .wine-lab-reset-btn {
+            background: rgba(107, 75, 32, 0.8);
+            color: var(--ivory);
+            border: 1px solid var(--border-color);
+        }
+
+        .wine-lab-reset-btn:hover {
+            background: rgba(107, 75, 32, 1);
+            border-color: var(--gold);
+        }
+
+        .wine-lab-indicator {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid var(--border-color);
+            color: var(--gold);
+            font-family: var(--font-body);
+            font-size: var(--fs-200);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: 8px;
+            display: none;
+            margin-bottom: var(--space-sm);
+        }
+
+        .wine-lab-indicator.active {
+            display: inline-block;
+        }
+
+        .wine-lab-card {
+            background: var(--charcoal);
+            color: var(--ivory);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            font-family: var(--font-body);
+            transition: all var(--transition-medium);
+        }
+
+        .wine-lab-card:hover {
+            box-shadow: 0 12px 40px var(--shadow-color);
+            transform: translateY(-2px);
+        }
+
+        .wine-lab-card-header {
+            background: linear-gradient(135deg, var(--wine-lab-primary), var(--wine-lab-dark));
+            color: var(--ivory);
+            padding: var(--space-md) var(--space-lg);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-xs);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .wine-lab-card-header h3 {
+            margin: 0;
+            font-family: var(--font-heading);
+            font-size: var(--fs-500);
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--ivory);
+            line-height: 1.3;
+        }
+
+        .wine-lab-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: var(--space-xxs) var(--space-sm);
+            border-radius: 6px;
+            font-family: var(--font-heading);
+            font-size: var(--fs-200);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(4px);
+        }
+
+        .wine-lab-content {
+            padding: var(--space-lg);
+            background: var(--charcoal);
+        }
+
+        .wine-lab-section {
+            position: relative;
+            background: rgba(26, 26, 26, 0.6);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: var(--space-md);
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+            transition: all var(--transition-medium);
+        }
+
+        .wine-lab-section:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+            border-color: var(--gold);
+            background: rgba(26, 26, 26, 0.8);
+        }
+
+        .wine-lab-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .wine-lab-section-body {
+            position: relative;
+            z-index: 2;
+            padding: var(--space-md);
+        }
+
+        .wine-lab-logo-bg {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .wine-lab-logo-bg img {
+            width: 220px;
+            height: 220px;
+            object-fit: contain;
+            filter: grayscale(50%);
+        }
+
+        .wine-lab-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-sm);
+        }
+
+        .wine-lab-info-item {
+            display: flex;
+            gap: var(--space-xs);
+            font-size: var(--fs-300);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            color: var(--ivory);
+        }
+
+        .wine-lab-info-item strong {
+            min-width: 110px;
+            color: var(--wine-lab-primary);
+            font-family: var(--font-heading);
+            font-weight: 600;
+            font-size: var(--fs-300);
+            letter-spacing: 0.5px;
+        }
+
+        .wine-lab-summary h4 {
+            margin: var(--space-sm) 0 var(--space-xs) 0;
+            color: var(--wine-lab-primary);
+            font-family: var(--font-heading);
+            font-size: var(--fs-500);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .wine-lab-summary p {
+            font-family: var(--font-body);
+            line-height: 1.7;
+            color: var(--ivory);
+            font-size: var(--fs-300);
+            margin-bottom: var(--space-sm);
+        }
+
+        .wine-lab-chart-title {
+            text-align: center;
+            color: var(--wine-lab-primary);
+            margin: 0 0 var(--space-md) 0;
+            font-family: var(--font-heading);
+            font-size: var(--fs-600);
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .wine-lab-chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-md);
+        }
+
+        .wine-lab-chart-editor {
+            display: none;
+            background: rgba(26, 26, 26, 0.9);
+            border: 2px solid var(--wine-lab-primary);
+            border-radius: 12px;
+            padding: var(--space-md);
+            margin-top: var(--space-sm);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+
+        .wine-lab-chart-editor h4 {
+            font-family: var(--font-heading);
+            color: var(--wine-lab-primary);
+            margin-bottom: var(--space-sm);
+            font-size: var(--fs-400);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .wine-lab-chart-editor.active {
+            display: block;
+        }
+
+        .wine-lab-slider-item {
+            display: grid;
+            grid-template-columns: 90px 1fr 30px;
+            gap: var(--space-xs);
+            align-items: center;
+            padding: var(--space-xs);
+            background: rgba(26, 26, 26, 0.6);
+            border-radius: 8px;
+            margin-bottom: var(--space-xs);
+            border: 1px solid var(--border-color);
+            transition: all var(--transition-medium);
+        }
+
+        .wine-lab-slider-item:hover {
+            border-color: var(--gold);
+            background: rgba(26, 26, 26, 0.8);
+        }
+
+        .wine-lab-slider-item:has(.wine-lab-radar-label-input) {
+            grid-template-columns: 90px 1fr 30px;
+        }
+
+        .wine-lab-slider-item span {
+            font-weight: 600;
+            color: var(--wine-lab-primary);
+            text-align: center;
+            font-family: var(--font-heading);
+            font-size: var(--fs-300);
+        }
+
+        .wine-lab-slider-item input[type="range"] {
+            width: 100%;
+            accent-color: var(--wine-lab-primary);
+        }
+
+        .wine-lab-aroma-name {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: var(--space-xxs) var(--space-xs);
+            font-family: var(--font-body);
+            font-size: var(--fs-200);
+            width: 85px;
+            background: rgba(26, 26, 26, 0.8);
+            color: var(--ivory);
+            transition: all var(--transition-medium);
+        }
+
+        .wine-lab-aroma-name:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+            background: rgba(26, 26, 26, 1);
+        }
+
+        .wine-lab-editable {
+            border-radius: 4px;
+            padding: 2px var(--space-xxs);
+            transition: all var(--transition-medium);
+            font-family: var(--font-body);
+            color: var(--ivory);
+        }
+
+        .wine-lab-editable:hover {
+            background: rgba(212, 175, 55, 0.1);
+            cursor: pointer;
+        }
+
+        .wine-lab-editable.editing {
+            background: rgba(26, 26, 26, 0.9);
+            border: 2px solid var(--gold);
+            padding: var(--space-xxs) var(--space-xs);
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+            color: var(--ivory);
+        }
+
+        .wine-lab-footer {
+            background: linear-gradient(135deg, var(--wine-lab-dark) 0%, var(--charcoal) 100%);
+            color: var(--gold-light);
+            text-align: center;
+            padding: var(--space-sm);
+            font-size: var(--fs-200);
+            font-family: var(--font-body);
+            border-top: 1px solid var(--border-color);
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 768px) {
+            .wine-lab-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .wine-lab-chart-row,
+            .wine-lab-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .wine-lab-controls {
+                justify-content: flex-start;
+            }
+
+            .wine-lab-content {
+                padding: var(--space-md);
+            }
+
+            .wine-lab-card-header {
+                padding: var(--space-sm) var(--space-md);
+            }
+        }
+
+        /* ==================== WINE LAB DAY MODE ==================== */
+        :root[data-theme="day"] #wineLabSection {
+            border-top-color: rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-title {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-toggle {
+            background: linear-gradient(135deg, #C5A059 0%, #8B6914 100%) !important;
+            color: #fff !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-card {
+            background: #FDFBF7 !important;
+            border-color: rgba(139, 105, 20, 0.3) !important;
+            color: var(--charcoal) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-content {
+            background: #FDFBF7 !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-info-item {
+            color: var(--charcoal) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-summary p {
+            color: var(--charcoal) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-editable {
+            color: var(--charcoal) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-section {
+            background: var(--ivory) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-card-header {
+            background: linear-gradient(135deg, #8B0000 0%, #5a0000 100%) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-section {
+            background: var(--ivory) !important;
+            border-color: rgba(139, 105, 20, 0.2) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-section:hover {
+            border-color: var(--gold) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-content {
+            background: var(--cream) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-chart-editor {
+            background: var(--ivory) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-info-item strong {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-summary h4 {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-chart-title {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-editable {
+            color: #1a1a1a !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-editable:hover {
+            background: rgba(139, 105, 20, 0.1) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-editable.editing {
+            border-color: #8B0000 !important;
+            background: #fff !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-slider-item {
+            background: rgba(245, 245, 240, 0.5) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-slider-item span {
+            color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-chart-editor {
+            background: rgba(255, 255, 255, 0.98) !important;
+            border-color: #8B0000 !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-footer {
+            background: #5a0000 !important;
+            color: #C5A059 !important;
+        }
+
+        .wine-lab-radar-label-input {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: var(--space-xxs) var(--space-xs);
+            font-family: var(--font-body);
+            font-size: var(--fs-200);
+            width: 85px;
+            background: rgba(26, 26, 26, 0.8);
+            color: var(--ivory);
+            transition: all var(--transition-medium);
+        }
+
+        .wine-lab-radar-label-input:focus {
+            outline: none;
+            border-color: var(--wine-lab-primary);
+            box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.2);
+            background: rgba(26, 26, 26, 1);
+        }
+
+        :root[data-theme="day"] .wine-lab-radar-label-input {
+            border-color: rgba(139, 105, 20, 0.3) !important;
+            background: var(--ivory) !important;
+            color: var(--charcoal) !important;
+        }
+
+        :root[data-theme="day"] .wine-lab-radar-label-input:focus {
+            border-color: #8B0000 !important;
+            box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.2) !important;
+        }
+
+    </style>
+</head>
+<body class="hero-enhanced">
+    <!-- Fixed Home Button -->
+    <a href="./index.html" class="fixed-home-btn" aria-label="Back to Home">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="luxury-container">
+        <!-- Top Bar -->
+        <div class="wine-details-top-bar">
+            <a href="#" class="wine-details-back-btn" id="backButton">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            <div class="wine-details-logo" onclick="window.location.href='./index.html'">
+                <picture>
+                    <source srcset="./image/gcaLogo.webp" type="image/webp">
+                    <img src="./image/gcaLogo.png" alt="Gran Caffè L'Aquila Logo" class="wine-details-logo-image" decoding="async">
+                </picture>
+            </div>
+            <h1 class="wine-details-top-title">WINE DETAILS</h1>
+            <button class="wine-details-share-btn" id="shareWineBtnTop">
+                <i class="fas fa-share-alt"></i>
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <main class="wine-details-container">
+            <div class="wine-details-content">
+                <!-- Image Section -->
+                <div class="wine-image-section">
+                    <div class="wine-name-block">
+                        <h1 class="wine-name" id="wineName">Loading...</h1>
+                        <div id="wineQuickInfo" class="wine-quick-info" aria-live="polite"></div>
+                    </div>
+                    <div class="wine-image" id="wineImageContainer">
+                        <i class="fas fa-wine-bottle wine-bottle" id="wineBottleIcon"></i>
+                        <img id="wineBottleImage" src="" alt="Wine bottle" style="display: none;" loading="lazy" decoding="async">
+                    </div>
+                </div>
+
+                <!-- Wine Info Section -->
+                <div class="wine-info-section">
+                    <div class="wine-description" id="wineDescription" style="display: none;">
+                        Loading wine description...
+                    </div>
+                    <div class="wine-meta" id="wineMeta">
+                        <!-- Populated by main.js -->
+                    </div>
+                    <!-- Food Pairings -->
+                    <div class="food-pairings" id="foodPairings" style="display: none;">
+                        <h2 class="section-title">Food Pairings</h2>
+                        <div class="pairing-list" id="pairingList">
+                            <!-- Populated by main.js -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasting Notes: shown in popup (button in wine-image-section) -->
+            </div>
+        </main>
+
+        <!-- Tasting Notes Popup -->
+        <div class="tasting-notes-popup-overlay" id="tastingNotesPopup" role="dialog" aria-modal="true" aria-labelledby="tastingNotesPopupTitle" aria-hidden="true">
+            <div class="tasting-notes-popup-content">
+                <div class="tasting-notes-popup-header">
+                    <h2 class="tasting-notes-popup-title" id="tastingNotesPopupTitle">Tasting Notes</h2>
+                    <button type="button" class="tasting-notes-popup-close" id="tastingNotesPopupClose" aria-label="Chiudi">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="tasting-notes-popup-body" id="tastingNotesPopupBody">
+                    <!-- Content populated by main.js -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Popup Modal -->
+        <div class="info-popup-overlay" id="infoPopup">
+            <div class="info-popup-content">
+                <div class="info-popup-header">
+                    <h2 class="info-popup-title" id="infoPopupTitle">Information</h2>
+                    <button class="info-popup-close" id="infoPopupClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="info-popup-body" id="infoPopupBody">
+                    <!-- Content populated by main.js -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="luxury-footer">
+            <div class="footer-content">
+                <div class="footer-logo">GRAN CAFFÈ L'AQUILA</div>
+                <div class="footer-info">
+                    <p><i class="fas fa-map-marker-alt"></i> 1716 Chestnut St</p>
+                    <p><i class="fas fa-phone"></i> +1 (215) 568-5600</p>
+                </div>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                </div>
+                <div class="copyright">
+                    <p>&copy; 2023 Gran Caffè L'Aquila</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="share-modal" id="shareModal">
+        <div class="share-modal-content">
+            <div class="share-modal-header">
+                <h3>Share this Wine</h3>
+                <button class="close-share-modal" id="closeShareModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="share-options">
+                <div class="share-option" id="shareFacebook">
+                    <i class="fab fa-facebook-f"></i>
+                    <span>Facebook</span>
+                </div>
+                <div class="share-option" id="shareInstagram">
+                    <i class="fab fa-instagram"></i>
+                    <span>Instagram</span>
+                </div>
+                <div class="share-option" id="shareTwitter">
+                    <i class="fab fa-twitter"></i>
+                    <span>Twitter</span>
+                </div>
+                <div class="share-option" id="shareWhatsApp">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>WhatsApp</span>
+                </div>
+                <div class="share-option" id="shareEmail">
+                    <i class="fas fa-envelope"></i>
+                    <span>Email</span>
+                </div>
+                <div class="share-option" id="shareSMS">
+                    <i class="fas fa-sms"></i>
+                    <span>SMS</span>
+                </div>
+            </div>
+            <div class="share-url-section">
+                <label for="shareUrl">Share Link:</label>
+                <div class="url-copy-container">
+                    <input type="text" id="shareUrl" readonly>
+                    <button class="copy-url-btn" id="copyUrlBtn">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/wineries.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Funzione per applicare il tema
+        function applyTheme() {
+            const dayMode = localStorage.getItem('dayMode');
+            // Default a 'day' (light mode) se non è stato salvato alcun valore
+            const isDayMode = dayMode === null ? true : dayMode === 'true';
+            document.documentElement.setAttribute('data-theme', isDayMode ? 'day' : 'night');
+            // Salva il valore di default se non esiste
+            if (dayMode === null) {
+                localStorage.setItem('dayMode', 'true');
+            }
+        }
+
+        // Applica il tema all'avvio
+        applyTheme();
+
+        // Ascolta i cambiamenti del tema
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'dayMode') {
+                applyTheme();
+            }
+        });
+
+        // Re-apply theme when returning to the page (lighter than polling)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                applyTheme();
+            }
+        });
+        window.addEventListener('pageshow', applyTheme);
+
+        // Share Modal functionality (handled by main.js ShareWineManager, but keeping as fallback)
+        document.addEventListener('DOMContentLoaded', () => {
+        // Initialize info popup if WineApp is available
+        if (window.wineApp) {
+            window.wineApp.setupInfoPopup();
+        }
+        
+        const shareWineBtn = document.getElementById('shareWineBtn');
+        const shareWineBtnTop = document.getElementById('shareWineBtnTop');
+        const shareModal = document.getElementById('shareModal');
+        const closeShareModal = document.getElementById('closeShareModal');
+
+            if (shareWineBtn && shareModal) {
+        shareWineBtn.addEventListener('click', () => shareModal.classList.add('active'));
+            }
+            if (shareWineBtnTop && shareModal) {
+        shareWineBtnTop.addEventListener('click', () => shareModal.classList.add('active'));
+            }
+            if (closeShareModal && shareModal) {
+        closeShareModal.addEventListener('click', () => shareModal.classList.remove('active'));
+            }
+            if (shareModal) {
+        shareModal.addEventListener('click', (e) => {
+            if (e.target === shareModal) shareModal.classList.remove('active');
+        });
+            }
+
+        // Copy URL
+            const copyUrlBtn = document.getElementById('copyUrlBtn');
+            if (copyUrlBtn) {
+                copyUrlBtn.addEventListener('click', () => {
+            const url = document.getElementById('shareUrl');
+                    if (url) {
+            url.select();
+                        try {
+            document.execCommand('copy');
+            alert('Link copied!');
+                        } catch (err) {
+                            // Fallback for modern browsers
+                            navigator.clipboard.writeText(url.value).then(() => {
+                                alert('Link copied!');
+                            }).catch(() => {
+                                console.error('Failed to copy URL');
+                            });
+                        }
+                    }
+                });
+            }
+
+            // Set share URL
+            const shareUrl = document.getElementById('shareUrl');
+            if (shareUrl) {
+                shareUrl.value = window.location.href;
+            }
+
+            // Back Button handler - set href if not already set by WineApp
+            const backButton = document.getElementById('backButton');
+            if (backButton) {
+                // Wait for WineApp to set the href, or set it ourselves if not set
+                const checkBackButton = () => {
+                    if (backButton.href === '#' || backButton.href.endsWith('#')) {
+                        // Set default back URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const type = urlParams.get('type');
+                        
+                        let backUrl = 'index.html';
+                        const params = new URLSearchParams();
+                        
+                        // Try to get region from wine data if available
+                        if (window.wineApp && window.wineApp.wines) {
+                            const wineId = urlParams.get('id');
+                            if (wineId) {
+                                const wine = window.wineApp.wines.find(w => 
+                                    w.wine_number === wineId || 
+                                    w.wine_number === String(wineId) || 
+                                    String(w.wine_number) === String(wineId)
+                                );
+                                if (wine && wine.region) {
+                                    params.set('region', wine.region);
+                                }
+                            }
+                        }
+                        
+                        if (type) {
+                            params.set('type', type);
+                        }
+                        
+                        if (params.toString()) {
+                            backUrl += `?${params.toString()}`;
+                        }
+                        
+                        backButton.href = backUrl;
+                    }
+                };
+                
+                // Check immediately and after a delay to allow WineApp to set it
+                checkBackButton();
+                setTimeout(checkBackButton, 500);
+                
+                // Also handle click event as fallback
+                backButton.addEventListener('click', (e) => {
+                    if (backButton.href === '#' || backButton.href.endsWith('#')) {
+                        e.preventDefault();
+                        checkBackButton();
+                        // Navigate after setting href
+                        setTimeout(() => {
+                            window.location.href = backButton.href;
+                        }, 100);
+                    }
+                });
+            }
+
+            // Swipe gesture support for mobile/tablet navigation
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            const minSwipeDistance = 50; // Minimum distance for a swipe
+            const maxVerticalDistance = 100; // Max vertical movement to consider it a horizontal swipe
+
+            const container = document.querySelector('.wine-details-container');
+            if (container) {
+                container.addEventListener('touchstart', (e) => {
+                    touchStartX = e.changedTouches[0].screenX;
+                    touchStartY = e.changedTouches[0].screenY;
+                }, { passive: true });
+
+                container.addEventListener('touchend', (e) => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    touchEndY = e.changedTouches[0].screenY;
+                    handleSwipe();
+                }, { passive: true });
+
+                function handleSwipe() {
+                    const deltaX = touchEndX - touchStartX;
+                    const deltaY = Math.abs(touchEndY - touchStartY);
+                    
+                    // Only trigger swipe if horizontal movement is greater than vertical (horizontal swipe)
+                    if (Math.abs(deltaX) > minSwipeDistance && deltaY < maxVerticalDistance) {
+                        if (deltaX > 0) {
+                            // Swipe right - go back
+                            if (backButton && backButton.href && !backButton.href.endsWith('#')) {
+                                window.location.href = backButton.href;
+                            } else {
+                                window.history.back();
+                            }
+                        }
+                        // Swipe left could be used for next wine in future
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
